@@ -1,15 +1,15 @@
-import OpenAI from 'openai'
+﻿import OpenAI from 'openai'
 import { LLMMessage, LLMOptions, LLMResponse } from '../../types'
 import { LLMProvider } from './index'
 
 export class OpenAIProvider implements LLMProvider {
   private client: OpenAI | null = null
 
-  constructor(private apiKey: string) {}
+  constructor(private apiKey: string, private baseUrl?: string) {}
 
   private getClient(): OpenAI {
     if (!this.client) {
-      this.client = new OpenAI({ apiKey: this.apiKey })
+      this.client = new OpenAI({ apiKey: this.apiKey, ...(this.baseUrl ? { baseURL: this.baseUrl } : {}) })
     }
     return this.client
   }

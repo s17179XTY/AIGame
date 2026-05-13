@@ -4,9 +4,8 @@ import type { AppSettings as AppSettingsType } from '../../../main/services/type
 const DEFAULT_SETTINGS: AppSettingsType = {
   llmProvider: 'openai',
   llmModel: 'gpt-4o',
-  openaiApiKey: '',
-  anthropicApiKey: '',
-  geminiApiKey: '',
+  apiKey: '',
+  apiBaseUrl: '',
   imageProvider: 'none',
   imageModel: 'dall-e-3',
   stabilityApiKey: '',

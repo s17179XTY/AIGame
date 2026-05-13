@@ -7,12 +7,13 @@ export class GeminiProvider implements LLMProvider {
 
   constructor(
     private apiKey: string,
-    private modelName: string = 'gemini-pro'
+    private modelName: string = 'gemini-pro',
+    private baseUrl?: string
   ) {}
 
   private getModel(): GenerativeModel {
     if (!this.model) {
-      const genAI = new GoogleGenerativeAI(this.apiKey)
+      const genAI = new GoogleGenerativeAI(this.apiKey, this.baseUrl ? { baseUrl: this.baseUrl } : undefined)
       this.model = genAI.getGenerativeModel({ model: this.modelName })
     }
     return this.model
@@ -20,8 +21,19 @@ export class GeminiProvider implements LLMProvider {
 
   async chat(messages: LLMMessage[], options: LLMOptions): Promise<LLMResponse> {
     const model = this.getModel()
-    const modelWithOptions = this.modelName !== options.model
-      ? new GoogleGenerativeAI(this.apiKey).getGenerativeModel({ model: options.model })
+
+    const generationConfig: Record<string, unknown> = {}
+    if (options.temperature !== undefined) generationConfig.temperature = options.temperature
+    if (options.maxTokens !== undefined) generationConfig.maxOutputTokens = options.maxTokens
+    if (options.responseFormat === 'json_object') generationConfig.responseMimeType = 'application/json'
+
+    const configObj: Record<string, unknown> = { model: options.model }
+    if (Object.keys(generationConfig).length > 0) {
+      configObj.generationConfig = generationConfig
+    }
+
+    const modelWithOptions = this.modelName !== options.model || Object.keys(generationConfig).length > 0
+      ? new GoogleGenerativeAI(this.apiKey, this.baseUrl ? { baseUrl: this.baseUrl } : undefined).getGenerativeModel(configObj as any)
       : model
 
     const systemMessages = messages.filter((m) => m.role === 'system')

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { useSettingsStore } from '../stores/settingsStore'
 import type { AppSettings, LLMProviderType, ImageProviderType } from '../../../main/services/types'
@@ -9,6 +9,8 @@ export default function SettingsPage() {
   const updateSettings = useSettingsStore((s) => s.updateSettings)
 
   const [form, setForm] = useState<AppSettings>(settings)
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
 
   useEffect(() => {
     setForm(settings)
@@ -23,106 +25,133 @@ export default function SettingsPage() {
     setForm((f) => ({ ...f, [key]: value }))
   }
 
+  const handleTestConnection = async () => {
+    if (!form.apiKey) {
+      setTestResult({ success: false, message: '請先填入 API Key' })
+      return
+    }
+
+    setTesting(true)
+    setTestResult(null)
+    try {
+      const result = await window.api.settings.testLLM(
+        form.llmProvider,
+        form.apiKey,
+        form.apiBaseUrl || undefined
+      )
+      setTestResult(result)
+    } catch (err: any) {
+      setTestResult({ success: false, message: '測試失敗: ' + (err.message ?? '未知錯誤') })
+    } finally {
+      setTesting(false)
+    }
+  }
+
   const inputClass =
-    'w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-game-text placeholder-game-muted/40 focus:border-indigo-400/50 focus:bg-white/[0.06] outline-none transition-all duration-200'
-  const selectClass =
-    'w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-game-text focus:border-indigo-400/50 focus:bg-white/[0.06] outline-none transition-all duration-200 appearance-none cursor-pointer'
+    'w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none'
 
   return (
-    <div className="h-screen flex flex-col bg-game-bg">
-      <header className="flex items-center gap-4 px-8 py-5 border-b border-white/[0.06]">
-        <button
-          onClick={() => setPage('home')}
-          className="flex items-center gap-1.5 text-game-muted hover:text-game-text transition-colors text-sm"
-        >
+    <div className="h-screen flex flex-col">
+      <header className="flex items-center gap-4 px-6 py-4 border-b border-game-accent/30">
+        <button onClick={() => setPage('home')} className="text-game-muted hover:text-game-text">
           ← 返回
         </button>
-        <h1 className="text-xl font-bold gradient-text">設定</h1>
+        <h1 className="text-xl font-bold text-game-highlight">設定</h1>
       </header>
 
-      <main className="flex-1 overflow-y-auto p-8">
-        <div className="max-w-2xl mx-auto space-y-6">
+      <main className="flex-1 overflow-y-auto p-6">
+        <div className="max-w-2xl mx-auto space-y-8">
           {/* LLM Settings */}
-          <section className="rounded-2xl bg-game-panel/60 border border-white/[0.06] p-6 backdrop-blur-sm">
-            <div className="flex items-center gap-2 mb-6">
-              <span className="text-xl">🧠</span>
-              <h2 className="text-lg font-semibold text-game-text">大型語言模型 (LLM)</h2>
-            </div>
+          <section className="bg-game-panel rounded-xl p-6 border border-game-accent/20">
+            <h2 className="text-lg font-semibold mb-4 text-game-highlight">大型語言模型 (LLM)</h2>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-game-muted mb-2">提供商</label>
+                <label className="block text-sm text-game-muted mb-1">API 格式</label>
                 <select
                   value={form.llmProvider}
                   onChange={(e) => update('llmProvider', e.target.value as LLMProviderType)}
-                  className={selectClass}
+                  className={inputClass}
                 >
-                  <option value="openai">OpenAI</option>
-                  <option value="anthropic">Anthropic</option>
+                  <option value="openai">OpenAI 相容</option>
+                  <option value="anthropic">Anthropic 相容</option>
                   <option value="gemini">Google Gemini</option>
                 </select>
+                <p className="text-xs text-game-muted/50 mt-1">
+                  選擇 API 格式，OpenAI 相容格式可用於大多數代理/自託管服務
+                </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-game-muted mb-2">模型</label>
+                <label className="block text-sm text-game-muted mb-1">模型名稱</label>
                 <input
                   type="text"
                   value={form.llmModel}
                   onChange={(e) => update('llmModel', e.target.value)}
-                  placeholder="gpt-4o"
+                  placeholder="gpt-4o / claude-sonnet-4-20250514 / gemini-2.5-pro"
                   className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-game-muted mb-2">OpenAI API Key</label>
+                <label className="block text-sm text-game-muted mb-1">API Key</label>
                 <input
                   type="password"
-                  value={form.openaiApiKey}
-                  onChange={(e) => update('openaiApiKey', e.target.value)}
-                  placeholder="sk-..."
+                  value={form.apiKey}
+                  onChange={(e) => update('apiKey', e.target.value)}
+                  placeholder={form.llmProvider === 'openai' ? 'sk-...' : form.llmProvider === 'anthropic' ? 'sk-ant-...' : 'AIza...'}
                   className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-game-muted mb-2">Anthropic API Key</label>
+                <label className="block text-sm text-game-muted mb-1">API 地址 (可選)</label>
                 <input
-                  type="password"
-                  value={form.anthropicApiKey}
-                  onChange={(e) => update('anthropicApiKey', e.target.value)}
-                  placeholder="sk-ant-..."
+                  type="text"
+                  value={form.apiBaseUrl}
+                  onChange={(e) => update('apiBaseUrl', e.target.value)}
+                  placeholder="留空使用官方地址，或填入自訂 API 端點"
                   className={inputClass}
                 />
+                <p className="text-xs text-game-muted/50 mt-1">
+                  例如: https://api.openai.com/v1 或 https://your-proxy.com/v1
+                </p>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-game-muted mb-2">Gemini API Key</label>
-                <input
-                  type="password"
-                  value={form.geminiApiKey}
-                  onChange={(e) => update('geminiApiKey', e.target.value)}
-                  placeholder="AIza..."
-                  className={inputClass}
-                />
+              {/* Test Connection */}
+              <div className="pt-2 border-t border-game-accent/20">
+                <button
+                  onClick={handleTestConnection}
+                  disabled={testing}
+                  className="px-4 py-2 text-sm border border-game-highlight/50 text-game-highlight rounded-lg hover:bg-game-highlight/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {testing ? '測試中...' : '連結 測試連線'}
+                </button>
+                {testResult && (
+                  <p
+                    className={`mt-2 text-sm ${
+                      testResult.success ? 'text-green-400' : 'text-red-400'
+                    }`}
+                  >
+                    {testResult.success ? '✓ ' : '✗ '}
+                    {testResult.message}
+                  </p>
+                )}
               </div>
             </div>
           </section>
 
           {/* Image Settings */}
-          <section className="rounded-2xl bg-game-panel/60 border border-white/[0.06] p-6 backdrop-blur-sm">
-            <div className="flex items-center gap-2 mb-6">
-              <span className="text-xl">🎨</span>
-              <h2 className="text-lg font-semibold text-game-text">文生圖模型（可選）</h2>
-            </div>
+          <section className="bg-game-panel rounded-xl p-6 border border-game-accent/20">
+            <h2 className="text-lg font-semibold mb-4 text-game-highlight">文生圖模型（可選）</h2>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-game-muted mb-2">提供商</label>
+                <label className="block text-sm text-game-muted mb-1">廠商</label>
                 <select
                   value={form.imageProvider}
                   onChange={(e) => update('imageProvider', e.target.value as ImageProviderType | 'none')}
-                  className={selectClass}
+                  className={inputClass}
                 >
                   <option value="none">不使用圖片</option>
                   <option value="openai">OpenAI DALL-E</option>
@@ -133,23 +162,23 @@ export default function SettingsPage() {
               {form.imageProvider !== 'none' && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-game-muted mb-2">生成頻率</label>
+                    <label className="block text-sm text-game-muted mb-1">生成頻率</label>
                     <select
                       value={form.imageFrequency}
                       onChange={(e) =>
                         update('imageFrequency', e.target.value as 'conservative' | 'standard' | 'rich')
                       }
-                      className={selectClass}
+                      className={inputClass}
                     >
                       <option value="conservative">保守（僅場景變化）</option>
-                      <option value="standard">標準（場景 + 重要行動）</option>
+                      <option value="standard">標準（場景 + 重要行為）</option>
                       <option value="rich">豐富（較多觸發）</option>
                     </select>
                   </div>
 
                   {form.imageProvider === 'stability' && (
                     <div>
-                      <label className="block text-sm font-medium text-game-muted mb-2">Stability AI API Key</label>
+                      <label className="block text-sm text-game-muted mb-1">Stability AI API Key</label>
                       <input
                         type="password"
                         value={form.stabilityApiKey}
@@ -165,16 +194,16 @@ export default function SettingsPage() {
           </section>
 
           {/* Save */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3">
             <button
               onClick={handleSave}
-              className="flex-1 btn-primary py-3 rounded-xl font-medium text-sm text-white shadow-lg shadow-indigo-500/20"
+              className="flex-1 py-3 bg-game-highlight rounded-lg font-medium hover:bg-game-highlight/80 transition-colors"
             >
               儲存設定
             </button>
             <button
               onClick={() => setPage('home')}
-              className="px-8 py-3 rounded-xl border border-white/[0.08] text-game-muted hover:border-indigo-400/40 hover:text-indigo-300 hover:bg-white/[0.03] transition-all duration-200"
+              className="px-6 py-3 border border-game-muted/30 rounded-lg text-game-muted hover:border-game-highlight hover:text-game-text transition-colors"
             >
               取消
             </button>

@@ -1,15 +1,15 @@
-import Anthropic from '@anthropic-ai/sdk'
+﻿import Anthropic from '@anthropic-ai/sdk'
 import { LLMMessage, LLMOptions, LLMResponse } from '../../types'
 import { LLMProvider } from './index'
 
 export class AnthropicProvider implements LLMProvider {
   private client: Anthropic | null = null
 
-  constructor(private apiKey: string) {}
+  constructor(private apiKey: string, private baseUrl?: string) {}
 
   private getClient(): Anthropic {
     if (!this.client) {
-      this.client = new Anthropic({ apiKey: this.apiKey })
+      this.client = new Anthropic({ apiKey: this.apiKey, ...(this.baseUrl ? { baseURL: this.baseUrl } : {}) })
     }
     return this.client
   }

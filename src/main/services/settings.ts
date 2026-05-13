@@ -1,4 +1,4 @@
-import { getDatabase } from '../database'
+﻿import { getDatabase } from '../database'
 import { AppSettings, DEFAULT_SETTINGS } from './types'
 
 export function getSettings(): AppSettings {
@@ -28,4 +28,49 @@ export function updateSettings(updates: Partial<AppSettings>): AppSettings {
 
   transaction()
   return getSettings()
+}
+export async function testLLMConnection(provider: string, apiKey: string, baseUrl?: string): Promise<{ success: boolean; message: string }> {
+  try {
+    if (!apiKey) {
+      return { success: false, message: 'API Key 未設定' }
+    }
+
+    const minModel = provider === 'anthropic' ? 'claude-3-haiku-20240307' : provider === 'gemini' ? 'gemini-2.0-flash-lite' : 'gpt-4o-mini'
+
+    if (provider === 'openai') {
+      const OpenAI = (await import('openai')).default
+      const client = new OpenAI({ apiKey, ...(baseUrl ? { baseURL: baseUrl } : {}) })
+      await client.chat.completions.create({
+        model: minModel,
+        messages: [{ role: 'user', content: 'Hi' }],
+        max_tokens: 5,
+      })
+      return { success: true, message: 'OpenAI 連線成功' }
+    }
+
+    if (provider === 'anthropic') {
+      const Anthropic = (await import('@anthropic-ai/sdk')).default
+      const client = new Anthropic({ apiKey, ...(baseUrl ? { baseURL: baseUrl } : {}) })
+      await client.messages.create({
+        model: minModel,
+        max_tokens: 5,
+        messages: [{ role: 'user', content: 'Hi' }],
+      })
+      return { success: true, message: 'Anthropic 連線成功' }
+    }
+
+    if (provider === 'gemini') {
+      const { GoogleGenerativeAI } = await import('@google/generative-ai')
+      const genAI = new GoogleGenerativeAI(apiKey, baseUrl ? { baseUrl } : undefined)
+      const model = genAI.getGenerativeModel({ model: minModel })
+      await model.generateContent('Hi')
+      return { success: true, message: 'Gemini 連線成功' }
+    }
+
+    return { success: false, message: `不支援的 provider: ${provider}` }
+  } catch (err: any) {
+    const msg = err?.message ?? err?.toString() ?? '未知錯誤'
+    const shortMsg = msg.length > 150 ? msg.slice(0, 150) + '...' : msg
+    return { success: false, message: `連線失敗: ${shortMsg}` }
+  }
 }

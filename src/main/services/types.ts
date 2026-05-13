@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // Core Type Definitions for AI Novel Game
 // ============================================================
 
@@ -198,9 +198,8 @@ export interface StoryEntry {
 export interface AppSettings {
   llmProvider: LLMProviderType
   llmModel: string
-  openaiApiKey: string
-  anthropicApiKey: string
-  geminiApiKey: string
+  apiKey: string
+  apiBaseUrl: string
   imageProvider: ImageProviderType | 'none'
   imageModel: string
   stabilityApiKey: string
@@ -210,9 +209,8 @@ export interface AppSettings {
 export const DEFAULT_SETTINGS: AppSettings = {
   llmProvider: 'openai',
   llmModel: 'gpt-4o',
-  openaiApiKey: '',
-  anthropicApiKey: '',
-  geminiApiKey: '',
+  apiKey: '',
+  apiBaseUrl: '',
   imageProvider: 'none',
   imageModel: 'dall-e-3',
   stabilityApiKey: '',
@@ -270,4 +268,5 @@ export const IPC_CHANNELS = {
   // Story
   STORY_GET_LOG: 'story:get-log',
   STORY_GET_SNAPSHOT: 'story:get-snapshot',
+  SETTINGS_TEST_LLM: 'settings:test-llm',
 } as const
