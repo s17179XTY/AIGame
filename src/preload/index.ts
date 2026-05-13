@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron'
+﻿import { contextBridge, ipcRenderer } from 'electron'
 
 const api = {
   // World
@@ -34,6 +34,9 @@ const api = {
 
   // Settings
   settings: {
+    testLLM: (provider: string, apiKey: string, baseUrl?: string) =>
+      ipcRenderer.invoke('settings:test-llm', provider, apiKey, baseUrl),
+
     get: () => ipcRenderer.invoke('settings:get'),
     update: (updates: any) => ipcRenderer.invoke('settings:update', updates),
   },

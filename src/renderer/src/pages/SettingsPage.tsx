@@ -9,6 +9,8 @@ export default function SettingsPage() {
   const updateSettings = useSettingsStore((s) => s.updateSettings)
 
   const [form, setForm] = useState<AppSettings>(settings)
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
 
   useEffect(() => {
     setForm(settings)
@@ -23,6 +25,31 @@ export default function SettingsPage() {
     setForm((f) => ({ ...f, [key]: value }))
   }
 
+  const handleTestConnection = async () => {
+    if (!form.apiKey) {
+      setTestResult({ success: false, message: '請先填入 API Key' })
+      return
+    }
+
+    setTesting(true)
+    setTestResult(null)
+    try {
+      const result = await window.api.settings.testLLM(
+        form.llmProvider,
+        form.apiKey,
+        form.apiBaseUrl || undefined
+      )
+      setTestResult(result)
+    } catch (err: any) {
+      setTestResult({ success: false, message: '測試失敗: ' + (err.message ?? '未知錯誤') })
+    } finally {
+      setTesting(false)
+    }
+  }
+
+  const inputClass =
+    'w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none'
+
   return (
     <div className="h-screen flex flex-col">
       <header className="flex items-center gap-4 px-6 py-4 border-b border-game-accent/30">
@@ -36,64 +63,80 @@ export default function SettingsPage() {
         <div className="max-w-2xl mx-auto space-y-8">
           {/* LLM Settings */}
           <section className="bg-game-panel rounded-xl p-6 border border-game-accent/20">
-            <h2 className="text-lg font-semibold mb-4 text-game-highlight">大語言模型 (LLM)</h2>
+            <h2 className="text-lg font-semibold mb-4 text-game-highlight">大型語言模型 (LLM)</h2>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-game-muted mb-1">廠商</label>
+                <label className="block text-sm text-game-muted mb-1">API 格式</label>
                 <select
                   value={form.llmProvider}
                   onChange={(e) => update('llmProvider', e.target.value as LLMProviderType)}
-                  className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none"
+                  className={inputClass}
                 >
-                  <option value="openai">OpenAI</option>
-                  <option value="anthropic">Anthropic</option>
+                  <option value="openai">OpenAI 相容</option>
+                  <option value="anthropic">Anthropic 相容</option>
                   <option value="gemini">Google Gemini</option>
                 </select>
+                <p className="text-xs text-game-muted/50 mt-1">
+                  選擇 API 格式，OpenAI 相容格式可用於大多數代理/自託管服務
+                </p>
               </div>
 
               <div>
-                <label className="block text-sm text-game-muted mb-1">模型</label>
+                <label className="block text-sm text-game-muted mb-1">模型名稱</label>
                 <input
                   type="text"
                   value={form.llmModel}
                   onChange={(e) => update('llmModel', e.target.value)}
-                  placeholder="gpt-4o"
-                  className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none"
+                  placeholder="gpt-4o / claude-sonnet-4-20250514 / gemini-2.5-pro"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-game-muted mb-1">OpenAI API Key</label>
+                <label className="block text-sm text-game-muted mb-1">API Key</label>
                 <input
                   type="password"
-                  value={form.openaiApiKey}
-                  onChange={(e) => update('openaiApiKey', e.target.value)}
-                  placeholder="sk-..."
-                  className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none"
+                  value={form.apiKey}
+                  onChange={(e) => update('apiKey', e.target.value)}
+                  placeholder={form.llmProvider === 'openai' ? 'sk-...' : form.llmProvider === 'anthropic' ? 'sk-ant-...' : 'AIza...'}
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-game-muted mb-1">Anthropic API Key</label>
+                <label className="block text-sm text-game-muted mb-1">API 地址 (可選)</label>
                 <input
-                  type="password"
-                  value={form.anthropicApiKey}
-                  onChange={(e) => update('anthropicApiKey', e.target.value)}
-                  placeholder="sk-ant-..."
-                  className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none"
+                  type="text"
+                  value={form.apiBaseUrl}
+                  onChange={(e) => update('apiBaseUrl', e.target.value)}
+                  placeholder="留空使用官方地址，或填入自訂 API 端點"
+                  className={inputClass}
                 />
+                <p className="text-xs text-game-muted/50 mt-1">
+                  例如: https://api.openai.com/v1 或 https://your-proxy.com/v1
+                </p>
               </div>
 
-              <div>
-                <label className="block text-sm text-game-muted mb-1">Gemini API Key</label>
-                <input
-                  type="password"
-                  value={form.geminiApiKey}
-                  onChange={(e) => update('geminiApiKey', e.target.value)}
-                  placeholder="AIza..."
-                  className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none"
-                />
+              {/* Test Connection */}
+              <div className="pt-2 border-t border-game-accent/20">
+                <button
+                  onClick={handleTestConnection}
+                  disabled={testing}
+                  className="px-4 py-2 text-sm border border-game-highlight/50 text-game-highlight rounded-lg hover:bg-game-highlight/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {testing ? '測試中...' : '連結 測試連線'}
+                </button>
+                {testResult && (
+                  <p
+                    className={`mt-2 text-sm ${
+                      testResult.success ? 'text-green-400' : 'text-red-400'
+                    }`}
+                  >
+                    {testResult.success ? '✓ ' : '✗ '}
+                    {testResult.message}
+                  </p>
+                )}
               </div>
             </div>
           </section>
@@ -108,7 +151,7 @@ export default function SettingsPage() {
                 <select
                   value={form.imageProvider}
                   onChange={(e) => update('imageProvider', e.target.value as ImageProviderType | 'none')}
-                  className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none"
+                  className={inputClass}
                 >
                   <option value="none">不使用圖片</option>
                   <option value="openai">OpenAI DALL-E</option>
@@ -119,13 +162,13 @@ export default function SettingsPage() {
               {form.imageProvider !== 'none' && (
                 <>
                   <div>
-                    <label className="block text-sm text-game-muted mb-1">生圖頻率</label>
+                    <label className="block text-sm text-game-muted mb-1">生成頻率</label>
                     <select
                       value={form.imageFrequency}
                       onChange={(e) =>
                         update('imageFrequency', e.target.value as 'conservative' | 'standard' | 'rich')
                       }
-                      className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none"
+                      className={inputClass}
                     >
                       <option value="conservative">保守（僅場景變化）</option>
                       <option value="standard">標準（場景 + 重要行為）</option>
@@ -141,7 +184,7 @@ export default function SettingsPage() {
                         value={form.stabilityApiKey}
                         onChange={(e) => update('stabilityApiKey', e.target.value)}
                         placeholder="sk-..."
-                        className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none"
+                        className={inputClass}
                       />
                     </div>
                   )}

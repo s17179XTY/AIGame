@@ -1,9 +1,9 @@
-import { ipcMain } from 'electron'
+﻿import { ipcMain } from 'electron'
 import { IPC_CHANNELS, WorldConfig } from './services/types'
 import { createWorld, getWorld, listWorlds, updateWorld, deleteWorld, getWorldState } from './services/world'
 import { createCharacter, getCharacter, listCharacters, updateCharacter, deleteCharacter } from './services/character'
 import { processGameAction, getStoryLog } from './services/game'
-import { getSettings, updateSettings } from './services/settings'
+import { getSettings, updateSettings, testLLMConnection } from './services/settings'
 import { OpenAIImageProvider, StabilityImageProvider } from './services/image'
 
 export function registerIpcHandlers(): void {
@@ -65,7 +65,7 @@ export function registerIpcHandlers(): void {
 
     let provider
     if (settings.imageProvider === 'openai') {
-      provider = new OpenAIImageProvider(settings.openaiApiKey)
+      provider = new OpenAIImageProvider(settings.apiKey)
     } else if (settings.imageProvider === 'stability') {
       provider = new StabilityImageProvider(settings.stabilityApiKey)
     } else {
@@ -101,7 +101,7 @@ export function registerIpcHandlers(): void {
 
     let provider
     if (settings.imageProvider === 'openai') {
-      provider = new OpenAIImageProvider(settings.openaiApiKey)
+      provider = new OpenAIImageProvider(settings.apiKey)
     } else if (settings.imageProvider === 'stability') {
       provider = new StabilityImageProvider(settings.stabilityApiKey)
     } else {
@@ -111,6 +111,11 @@ export function registerIpcHandlers(): void {
     return provider.generate(prompt, { size: '1792x1024', quality: 'hd' })
   })
 
+
+  // ---- Settings test handler ----
+  ipcMain.handle(IPC_CHANNELS.SETTINGS_TEST_LLM, async (_event, provider: string, apiKey: string, baseUrl?: string) => {
+    return testLLMConnection(provider, apiKey, baseUrl)
+  })
   // ---- Settings handlers ----
   ipcMain.handle(IPC_CHANNELS.SETTINGS_GET, () => {
     return getSettings()
