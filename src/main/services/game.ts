@@ -169,7 +169,7 @@ ${recentEventsText || '尚無記錄'}
   const db = getDatabase()
   const recentLog = db
     .prepare('SELECT * FROM story_log WHERE world_id = ? ORDER BY sequence DESC LIMIT 10')
-    .all(world.id) as Record<string, unknown>[]
+    .all(action.worldId) as Record<string, unknown>[]
 
   if (recentLog.length > 0) {
     const contextEntries = recentLog.reverse()
@@ -431,20 +431,7 @@ function createStoryEntries(
   return entries
 }
 
-function getLLMProvider(settings: AppSettings): LLMProvider {
-  if (!settings.apiKey) throw new Error('API key not configured')
-  const baseUrl = settings.apiBaseUrl || undefined
-  switch (settings.llmProvider) {
-    case 'openai':
-      return new OpenAIProvider(settings.apiKey, baseUrl)
-    case 'anthropic':
-      return new AnthropicProvider(settings.apiKey, baseUrl)
-    case 'gemini':
-      return new GeminiProvider(settings.apiKey, settings.llmModel, baseUrl)
-    default:
-      throw new Error(`Unsupported LLM provider: ${settings.llmProvider}`)
-  }
-}
+function getLLMProvider(settings: AppSettings): ReturnType<typeof createLLMProvider> { return createLLMProvider(settings) }
 
 export function getStoryLog(
   worldId: string,

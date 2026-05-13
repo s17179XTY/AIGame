@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // Core Type Definitions for AI Novel Game
 // ============================================================
 
@@ -263,10 +263,10 @@ export const IPC_CHANNELS = {
 
   // Settings
   SETTINGS_GET: 'settings:get',
+  SETTINGS_TEST_LLM: 'settings:test-llm',
   SETTINGS_UPDATE: 'settings:update',
 
   // Story
   STORY_GET_LOG: 'story:get-log',
   STORY_GET_SNAPSHOT: 'story:get-snapshot',
-  SETTINGS_TEST_LLM: 'settings:test-llm',
 } as const

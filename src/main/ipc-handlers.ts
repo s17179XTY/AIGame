@@ -122,7 +122,30 @@ export function registerIpcHandlers(): void {
     return getSettings()
   })
 
-  ipcMain.handle(IPC_CHANNELS.SETTINGS_UPDATE, (_event, updates: any) => {
+  
+  ipcMain.handle(IPC_CHANNELS.SETTINGS_TEST_LLM, async (_event, provider: string, apiKey: string, model: string, baseUrl?: string) => {
+    try {
+      const llmProvider = createLLMProvider({
+        llmProvider: provider as any,
+        llmModel: model,
+        apiKey,
+        apiBaseUrl: baseUrl || '',
+        imageProvider: 'none',
+        imageModel: '',
+        stabilityApiKey: '',
+        imageFrequency: 'standard',
+      })
+      const response = await llmProvider.chat([{ role: 'user', content: 'Hello, respond with just "OK"' }], {
+        model,
+        temperature: 0,
+        maxTokens: 50,
+      })
+      return { success: true, message: `Connected successfully. Response: ${response.text.slice(0, 100)}` }
+    } catch (err: any) {
+      return { success: false, message: err.message || 'Unknown error' }
+    }
+  })
+ipcMain.handle(IPC_CHANNELS.SETTINGS_UPDATE, (_event, updates: any) => {
     return updateSettings(updates)
   })
 
