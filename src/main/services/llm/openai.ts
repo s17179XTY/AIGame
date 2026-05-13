@@ -1,4 +1,4 @@
-﻿import OpenAI from 'openai'
+import OpenAI from 'openai'
 import { LLMMessage, LLMOptions, LLMResponse } from '../../types'
 import { LLMProvider } from './index'
 
@@ -35,7 +35,7 @@ export class OpenAIProvider implements LLMProvider {
 
     const response = await client.chat.completions.create(params)
 
-    const content = response.choices[0]?.message?.content ?? ''
+    const content = response.choices?.[0]?.message?.content ?? ''
 
     return {
       text: content,

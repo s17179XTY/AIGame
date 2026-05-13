@@ -1,4 +1,4 @@
-ï»¿import { getDatabase } from '../database'
+import { getDatabase } from '../database'
 import { AppSettings, DEFAULT_SETTINGS } from './types'
 
 export function getSettings(): AppSettings {
@@ -29,48 +29,49 @@ export function updateSettings(updates: Partial<AppSettings>): AppSettings {
   transaction()
   return getSettings()
 }
-export async function testLLMConnection(provider: string, apiKey: string, baseUrl?: string): Promise<{ success: boolean; message: string }> {
+export async function testLLMConnection(provider: string, apiKey: string, model: string, baseUrl?: string): Promise<{ success: boolean; message: string }> {
   try {
     if (!apiKey) {
-      return { success: false, message: 'API Key æœªè¨­å®š' }
+      return { success: false, message: 'API Key Î´ÔO¶¨' }
     }
 
-    const minModel = provider === 'anthropic' ? 'claude-3-haiku-20240307' : provider === 'gemini' ? 'gemini-2.0-flash-lite' : 'gpt-4o-mini'
+    const fallbackModel = provider === 'anthropic' ? 'claude-3-haiku-20240307' : provider === 'gemini' ? 'gemini-2.0-flash-lite' : 'gpt-4o-mini'
+    const useModel = model || fallbackModel
 
     if (provider === 'openai') {
       const OpenAI = (await import('openai')).default
       const client = new OpenAI({ apiKey, ...(baseUrl ? { baseURL: baseUrl } : {}) })
       await client.chat.completions.create({
-        model: minModel,
+        model: useModel,
         messages: [{ role: 'user', content: 'Hi' }],
         max_tokens: 5,
       })
-      return { success: true, message: 'OpenAI é€£ç·šæˆåŠŸ' }
+      return { success: true, message: 'OpenAI ßB¾€³É¹¦' }
     }
 
     if (provider === 'anthropic') {
       const Anthropic = (await import('@anthropic-ai/sdk')).default
       const client = new Anthropic({ apiKey, ...(baseUrl ? { baseURL: baseUrl } : {}) })
       await client.messages.create({
-        model: minModel,
+        model: useModel,
         max_tokens: 5,
         messages: [{ role: 'user', content: 'Hi' }],
       })
-      return { success: true, message: 'Anthropic é€£ç·šæˆåŠŸ' }
+      return { success: true, message: 'Anthropic ßB¾€³É¹¦' }
     }
 
     if (provider === 'gemini') {
       const { GoogleGenerativeAI } = await import('@google/generative-ai')
       const genAI = new GoogleGenerativeAI(apiKey, baseUrl ? { baseUrl } : undefined)
-      const model = genAI.getGenerativeModel({ model: minModel })
-      await model.generateContent('Hi')
-      return { success: true, message: 'Gemini é€£ç·šæˆåŠŸ' }
+      const geminiModel = genAI.getGenerativeModel({ model: useModel })
+      await geminiModel.generateContent('Hi')
+      return { success: true, message: 'Gemini ßB¾€³É¹¦' }
     }
 
-    return { success: false, message: `ä¸æ”¯æ´çš„ provider: ${provider}` }
+    return { success: false, message: `²»Ö§Ô®µÄ provider: ${provider}` }
   } catch (err: any) {
-    const msg = err?.message ?? err?.toString() ?? 'æœªçŸ¥éŒ¯èª¤'
+    const msg = err?.message ?? err?.toString() ?? 'Î´ÖªåeÕ`'
     const shortMsg = msg.length > 150 ? msg.slice(0, 150) + '...' : msg
-    return { success: false, message: `é€£ç·šå¤±æ•—: ${shortMsg}` }
+    return { success: false, message: `ßB¾€Ê§”¡: ${shortMsg}` }
   }
 }
