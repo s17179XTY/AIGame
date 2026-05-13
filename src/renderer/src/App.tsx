@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+﻿import React, { useEffect } from 'react'
 import { useAppStore } from './stores/appStore'
 import { useSettingsStore } from './stores/settingsStore'
 import HomePage from './pages/HomePage'
@@ -20,7 +20,12 @@ export default function App() {
   if (!loaded) {
     return (
       <div className="h-screen flex items-center justify-center bg-game-bg">
-        <div className="text-game-muted text-lg generating-pulse">載入中...</div>
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xl shadow-lg shadow-indigo-500/20">
+            <span className="generating-pulse">✦</span>
+          </div>
+          <p className="text-game-muted text-base">載入中...</p>
+        </div>
       </div>
     )
   }
@@ -44,5 +49,5 @@ export default function App() {
     }
   }
 
-  return <div className="h-screen bg-game-bg">{renderPage()}</div>
+  return <div className="h-screen bg-game-bg text-game-text">{renderPage()}</div>
 }

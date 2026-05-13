@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react'
+﻿import React, { useEffect, useState, useRef, useCallback } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { useSettingsStore } from '../stores/settingsStore'
 import { useGameStore } from '../stores/gameStore'
@@ -163,7 +163,10 @@ export default function GamePage() {
   if (!loaded || !world) {
     return (
       <div className="h-screen flex items-center justify-center bg-game-bg">
-        <div className="text-game-muted generating-pulse">載入遊戲中...</div>
+        <div className="text-center">
+          <div className="text-4xl mb-4 generating-pulse">✦</div>
+          <p className="text-game-muted text-lg">載入中...</p>
+        </div>
       </div>
     )
   }
@@ -171,102 +174,110 @@ export default function GamePage() {
   const player = characters.find((c) => c.isPlayer)
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col bg-game-bg">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-2 border-b border-game-accent/30 bg-game-panel/50 shrink-0">
+      <header className="flex items-center justify-between px-6 py-3.5 border-b border-white/[0.06] bg-game-bg/80 backdrop-blur-sm shrink-0">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setPage('home')}
-            className="text-game-muted hover:text-game-text text-sm"
+            className="flex items-center gap-1.5 text-game-muted hover:text-game-text transition-colors text-sm"
           >
-            ← 退出
+            ← 返回
           </button>
-          <h1 className="font-semibold">{world.name}</h1>
-          {store.worldState && (
-            <span className="text-xs text-game-muted">
-              {store.worldState.scene} · {store.worldState.time}
-            </span>
-          )}
+          <span className="text-white/[0.15]">|</span>
+          <h1 className="font-semibold text-game-text">{world.name}</h1>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setPage('story-log')}
-            className="px-3 py-1 text-xs border border-game-accent/30 rounded-lg text-game-muted hover:text-game-text transition-colors"
-          >
-            日誌
-          </button>
           {settings.imageProvider !== 'none' && (
             <button
               onClick={handleManualImageGen}
               disabled={store.isGeneratingImage}
-              className="px-3 py-1 text-xs bg-game-accent/50 rounded-lg hover:bg-game-accent transition-colors disabled:opacity-50"
+              className="px-3 py-1.5 text-xs rounded-lg border border-white/[0.08] text-game-muted hover:border-indigo-400/40 hover:text-indigo-300 transition-all duration-200 disabled:opacity-40"
             >
-              📷 生成畫面
+              🎲 生成場景
             </button>
           )}
+          <button
+            onClick={() => setPage('story-log')}
+            className="px-3 py-1.5 text-xs rounded-lg border border-white/[0.08] text-game-muted hover:border-indigo-400/40 hover:text-indigo-300 transition-all duration-200"
+          >
+            📖 故事日誌
+          </button>
+          <button
+            onClick={() => setPage('settings')}
+            className="px-3 py-1.5 text-xs rounded-lg border border-white/[0.08] text-game-muted hover:border-indigo-400/40 hover:text-indigo-300 transition-all duration-200"
+          >
+            設定
+          </button>
         </div>
       </header>
 
-      {/* Pending character requests */}
-      {pendingChars.length > 0 && (
-        <div className="bg-game-highlight/20 border-b border-game-highlight/30 px-4 py-3">
-          {pendingChars.map((char, i) => (
-            <div key={i} className="flex items-center gap-3 text-sm">
-              <span className="text-game-highlight">新角色登場：</span>
-              <span className="font-medium">{char.name}</span>
-              <span className="text-game-muted">
-                ({char.gender}, {char.age}歲, {char.personality})
-              </span>
-              <button
-                onClick={() => handleConfirmNewCharacter(char, i)}
-                className="px-2 py-0.5 bg-game-highlight rounded text-xs"
-              >
-                確認加入
-              </button>
-              <button
-                onClick={() => handleSkipNewCharacter(i)}
-                className="px-2 py-0.5 border border-game-muted/30 rounded text-xs text-game-muted"
-              >
-                略過
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left: Chat */}
+      <div className="flex-1 flex min-h-0">
+        {/* Left: Chat Area */}
         <div className="flex-1 flex flex-col min-w-0">
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-            {store.entries.length === 0 && (
-              <div className="text-center text-game-muted py-20">
-                <p className="text-lg">故事即將開始...</p>
-                <p className="text-sm mt-2">在下方輸入你的第一個動作或對話</p>
+          {/* Pending character confirmations */}
+          {pendingChars.length > 0 && (
+            <div className="px-4 py-3 bg-indigo-500/10 border-b border-indigo-500/20">
+              <p className="text-sm font-medium text-indigo-300 mb-2">AI 建議新增角色：</p>
+              <div className="space-y-2">
+                {pendingChars.map((char, i) => (
+                  <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg bg-indigo-500/5 border border-indigo-500/15">
+                    <span className="text-sm text-game-text">
+                      {char.name} ({char.gender}, {char.age}歲)
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleConfirmNewCharacter(char, i)}
+                        className="px-3 py-1 text-xs rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 transition-colors"
+                      >
+                        確認新增
+                      </button>
+                      <button
+                        onClick={() => handleSkipNewCharacter(i)}
+                        className="px-3 py-1 text-xs rounded-lg text-game-muted hover:text-game-text transition-colors"
+                      >
+                        跳過
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            )}
+            </div>
+          )}
 
-            {store.entries.map((entry) => (
-              <ChatBubble
-                key={entry.id}
-                entry={entry}
-                characters={characters}
-                hasImage={settings.imageProvider !== 'none'}
-              />
-            ))}
+          {/* Chat messages */}
+          <div className="flex-1 overflow-y-auto px-4 py-4">
+            <div className="max-w-2xl mx-auto space-y-3">
+              {store.entries.map((entry) => (
+                <ChatBubble
+                  key={entry.id}
+                  entry={entry}
+                  characters={characters}
+                  hasImage={store.currentImagePath !== null}
+                />
+              ))}
 
-            {store.isProcessing && (
-              <div className="flex items-center gap-2 text-game-muted text-sm pl-4">
-                <span className="generating-pulse">AI 正在回應...</span>
-              </div>
-            )}
+              {/* Processing indicator */}
+              {store.isProcessing && (
+                <div className="flex justify-start chat-bubble-enter">
+                  <div className="flex gap-3 max-w-[70%]">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+                      <span className="generating-pulse text-sm">✦</span>
+                    </div>
+                    <div className="px-4 py-3 rounded-2xl rounded-tl-sm bg-game-panel/80 border border-white/[0.06] text-sm text-game-muted">
+                      AI 回應中...
+                    </div>
+                  </div>
+                </div>
+              )}
 
-            <div ref={chatEndRef} />
+              <div ref={chatEndRef} />
+            </div>
           </div>
 
-          {/* Input Bar */}
-          <div className="px-4 py-3 border-t border-game-accent/30 bg-game-panel/30">
-            <div className="flex gap-2">
+          {/* Input Area */}
+          <div className="border-t border-white/[0.06] p-4 shrink-0">
+            <div className="max-w-2xl mx-auto flex items-center gap-3">
               <input
                 ref={inputRef}
                 type="text"
@@ -277,12 +288,12 @@ export default function GamePage() {
                 placeholder={
                   store.isProcessing ? 'AI 回應中...' : `輸入 ${player?.name ?? '你'} 的動作或對話...`
                 }
-                className="flex-1 bg-game-bg border border-game-accent/30 rounded-lg px-4 py-2.5 text-game-text focus:border-game-highlight outline-none disabled:opacity-50"
+                className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-game-text placeholder-game-muted/50 focus:border-indigo-400/50 outline-none disabled:opacity-40 transition-all duration-200"
               />
               <button
                 onClick={handleSend}
                 disabled={store.isProcessing || !playerInput.trim()}
-                className="px-5 py-2.5 bg-game-highlight rounded-lg font-medium hover:bg-game-highlight/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary px-6 py-3 rounded-xl font-medium text-sm text-white disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none shadow-lg shadow-indigo-500/25"
               >
                 發送
               </button>
@@ -292,42 +303,47 @@ export default function GamePage() {
 
         {/* Right: Scene Panel */}
         {settings.imageProvider !== 'none' && (
-          <div className="w-80 shrink-0 border-l border-game-accent/30 bg-game-panel/20 flex flex-col">
-            <div className="flex-1 flex items-center justify-center p-4">
+          <div className="w-80 shrink-0 border-l border-white/[0.06] bg-game-panel/30 flex flex-col">
+            <div className="flex-1 flex items-center justify-center p-6">
               {store.isGeneratingImage ? (
                 <div className="text-center text-game-muted">
-                  <div className="generating-pulse text-4xl mb-3">🎨</div>
+                  <div className="text-5xl mb-4 generating-pulse">🎨</div>
                   <p className="text-sm">繪製中...</p>
                 </div>
               ) : store.currentImagePath ? (
                 <img
                   src={`file://${store.currentImagePath}`}
-                  alt="場景插圖"
-                  className="max-w-full max-h-full rounded-lg scene-image-enter object-contain"
+                  alt="場景插畫"
+                  className="max-w-full max-h-full rounded-2xl scene-image-enter object-contain shadow-2xl"
                 />
               ) : (
-                <div className="text-center text-game-muted/50">
-                  <p className="text-4xl mb-3">🖼️</p>
-                  <p className="text-sm">尚無場景插圖</p>
-                  <p className="text-xs mt-1">點擊上方 📷 生成</p>
+                <div className="text-center text-game-muted/40">
+                  <p className="text-5xl mb-4">🖼️</p>
+                  <p className="text-sm">尚無場景插畫</p>
+                  <p className="text-xs mt-1">點擊上方 🎲 生成</p>
                 </div>
               )}
             </div>
 
             {store.worldState && (
-              <div className="p-3 border-t border-game-accent/30 text-xs text-game-muted">
-                <p className="font-medium text-game-text mb-1">{store.worldState.scene}</p>
-                <p>
-                  {store.worldState.time} · {store.worldState.weather}
-                </p>
-                <div className="mt-2">
-                  <p className="text-game-muted/70 mb-0.5">在場角色：</p>
-                  {characters.slice(0, 5).map((c) => (
-                    <span key={c.id} className="inline-block mr-1.5">
-                      {c.name}
-                    </span>
-                  ))}
+              <div className="p-4 border-t border-white/[0.06] bg-game-panel/60 backdrop-blur-sm">
+                <p className="font-semibold text-game-text mb-2">{store.worldState.scene}</p>
+                <div className="flex items-center gap-3 text-xs text-game-muted">
+                  <span>🕐 {store.worldState.time}</span>
+                  <span>🌤 {store.worldState.weather}</span>
                 </div>
+                {characters.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-white/[0.06]">
+                    <p className="text-xs text-game-muted/60 mb-1.5">在場角色</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {characters.slice(0, 8).map((c) => (
+                        <span key={c.id} className="inline-block px-2 py-0.5 text-xs rounded-md bg-white/[0.04] border border-white/[0.06] text-game-muted">
+                          {c.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -340,7 +356,6 @@ export default function GamePage() {
 function ChatBubble({
   entry,
   characters,
-  hasImage,
 }: {
   entry: StoryEntry
   characters: Character[]
@@ -353,8 +368,8 @@ function ChatBubble({
 
   if (isNarration) {
     return (
-      <div className="chat-bubble-enter">
-        <div className="mx-auto max-w-lg px-4 py-2 rounded-lg bg-game-bubble-narration border border-game-accent/10 text-center">
+      <div className="chat-bubble-enter flex justify-center">
+        <div className="max-w-lg px-6 py-3 rounded-2xl bg-white/[0.03] border border-white/[0.04] text-center">
           <p className="text-sm text-game-muted italic leading-relaxed">{entry.content}</p>
         </div>
       </div>
@@ -363,40 +378,40 @@ function ChatBubble({
 
   if (isAction) {
     return (
-      <div className="chat-bubble-enter">
-        <div className="mx-auto max-w-lg px-4 py-1.5 text-center">
-          <p className="text-sm text-game-muted">
-            <span className="font-medium text-game-text">{entry.speakerName}</span> {entry.content}
-          </p>
-        </div>
+      <div className="chat-bubble-enter flex justify-center">
+        <p className="text-sm text-game-muted">
+          <span className="font-semibold text-game-text">{entry.speakerName}</span> {entry.content}
+        </p>
       </div>
     )
   }
 
   return (
     <div className={`chat-bubble-enter flex ${isPlayer ? 'justify-end' : 'justify-start'}`}>
-      <div className={`flex gap-2 max-w-[70%] ${isPlayer ? 'flex-row-reverse' : ''}`}>
+      <div className={`flex gap-2.5 max-w-[75%] ${isPlayer ? 'flex-row-reverse' : ''}`}>
         {/* Avatar */}
         <div
-          className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-            isPlayer ? 'bg-game-highlight' : 'bg-game-accent'
+          className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 shadow-lg ${
+            isPlayer
+              ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-indigo-500/25'
+              : 'bg-game-panel text-game-muted ring-1 ring-white/[0.08]'
           }`}
         >
           {entry.speakerName.charAt(0)}
         </div>
 
-        <div>
-          <div className={`flex items-center gap-2 mb-0.5 ${isPlayer ? 'justify-end' : ''}`}>
+        <div className={`min-w-0 ${isPlayer ? 'items-end' : ''}`}>
+          <div className={`flex items-center gap-2 mb-1 ${isPlayer ? 'justify-end' : ''}`}>
             <span className="text-xs text-game-muted">{entry.speakerName}</span>
             {entry.emotion && (
-              <span className="text-xs text-game-muted/60">({entry.emotion})</span>
+              <span className="text-xs text-game-muted/50">({entry.emotion})</span>
             )}
           </div>
           <div
-            className={`px-3 py-2 rounded-2xl text-sm leading-relaxed ${
+            className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
               isPlayer
-                ? 'bg-game-bubble-player rounded-tr-sm'
-                : 'bg-game-bubble-npc rounded-tl-sm'
+                ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-tr-md shadow-lg shadow-indigo-500/20'
+                : 'bg-game-panel/80 text-game-text rounded-tl-md border border-white/[0.06]'
             }`}
           >
             <p>{entry.content}</p>
