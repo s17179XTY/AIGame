@@ -29,7 +29,7 @@ export class OpenAIImageProvider implements ImageProvider {
       quality: (options.quality as 'standard' | 'hd') ?? 'standard',
     })
 
-    const imageUrl = response.data[0]?.url
+    const imageUrl = response.data?.[0]?.url
     if (!imageUrl) {
       throw new Error('No image URL returned from OpenAI')
     }
@@ -38,7 +38,7 @@ export class OpenAIImageProvider implements ImageProvider {
 
     return {
       imagePath,
-      revisedPrompt: response.data[0]?.revised_prompt ?? undefined,
+      revisedPrompt: response.data?.[0]?.revised_prompt ?? undefined,
     }
   }
 

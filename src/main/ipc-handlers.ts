@@ -1,4 +1,4 @@
-﻿import { ipcMain } from 'electron'
+import { ipcMain } from 'electron'
 import { IPC_CHANNELS, WorldConfig } from './services/types'
 import { createWorld, getWorld, listWorlds, updateWorld, deleteWorld, getWorldState } from './services/world'
 import { createCharacter, getCharacter, listCharacters, updateCharacter, deleteCharacter } from './services/character'
@@ -113,8 +113,8 @@ export function registerIpcHandlers(): void {
 
 
   // ---- Settings test handler ----
-  ipcMain.handle(IPC_CHANNELS.SETTINGS_TEST_LLM, async (_event, provider: string, apiKey: string, baseUrl?: string) => {
-    return testLLMConnection(provider, apiKey, baseUrl)
+  ipcMain.handle(IPC_CHANNELS.SETTINGS_TEST_LLM, async (_event, provider: string, apiKey: string, model: string, baseUrl?: string) => {
+    return testLLMConnection(provider, apiKey, model, baseUrl)
   })
   // ---- Settings handlers ----
   ipcMain.handle(IPC_CHANNELS.SETTINGS_GET, () => {
