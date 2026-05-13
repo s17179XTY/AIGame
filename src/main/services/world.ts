@@ -1,10 +1,10 @@
-import { v4 as uuidv4 } from 'uuid'
+import { randomUUID } from 'crypto'
 import { getDatabase } from '../database'
 import { World, WorldConfig, WorldState } from './types'
 
 export function createWorld(config: WorldConfig): World {
   const db = getDatabase()
-  const id = uuidv4()
+  const id = randomUUID()
   const now = new Date().toISOString()
 
   db.prepare(
@@ -16,7 +16,7 @@ export function createWorld(config: WorldConfig): World {
     `INSERT INTO world_state (id, world_id, scene, time, weather, character_emotions, relationships, recent_events, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
-    uuidv4(),
+    randomUUID(),
     id,
     config.initialScene,
     '故事開始',

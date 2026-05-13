@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid'
+import { randomUUID } from 'crypto'
 import { getDatabase } from '../database'
 import { Character, CharacterConfig, VisualAnchor } from './types'
 
@@ -9,7 +9,7 @@ export function createCharacter(
   isDynamic: boolean = false
 ): Character {
   const db = getDatabase()
-  const id = uuidv4()
+  const id = randomUUID()
   const now = new Date().toISOString()
 
   db.prepare(
