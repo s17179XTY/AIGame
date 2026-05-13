@@ -5,6 +5,7 @@ import { createCharacter, getCharacter, listCharacters, updateCharacter, deleteC
 import { processGameAction, getStoryLog } from './services/game'
 import { getSettings, updateSettings, testLLMConnection } from './services/settings'
 import { OpenAIImageProvider, StabilityImageProvider } from './services/image'
+import { createLLMProvider } from './services/llm'
 
 export function registerIpcHandlers(): void {
   // ---- World handlers ----

@@ -32,7 +32,7 @@ export function updateSettings(updates: Partial<AppSettings>): AppSettings {
 export async function testLLMConnection(provider: string, apiKey: string, model: string, baseUrl?: string): Promise<{ success: boolean; message: string }> {
   try {
     if (!apiKey) {
-      return { success: false, message: 'API Key Î´ÔO¶¨' }
+      return { success: false, message: 'API Key æœªè¨­å®š' }
     }
 
     const fallbackModel = provider === 'anthropic' ? 'claude-3-haiku-20240307' : provider === 'gemini' ? 'gemini-2.0-flash-lite' : 'gpt-4o-mini'
@@ -46,7 +46,7 @@ export async function testLLMConnection(provider: string, apiKey: string, model:
         messages: [{ role: 'user', content: 'Hi' }],
         max_tokens: 5,
       })
-      return { success: true, message: 'OpenAI ßB¾€³É¹¦' }
+      return { success: true, message: 'OpenAI é€£ç·šæˆåŠŸ' }
     }
 
     if (provider === 'anthropic') {
@@ -57,7 +57,7 @@ export async function testLLMConnection(provider: string, apiKey: string, model:
         max_tokens: 5,
         messages: [{ role: 'user', content: 'Hi' }],
       })
-      return { success: true, message: 'Anthropic ßB¾€³É¹¦' }
+      return { success: true, message: 'Anthropic é€£ç·šæˆåŠŸ' }
     }
 
     if (provider === 'gemini') {
@@ -65,13 +65,13 @@ export async function testLLMConnection(provider: string, apiKey: string, model:
       const genAI = new GoogleGenerativeAI(apiKey, baseUrl ? { baseUrl } : undefined)
       const geminiModel = genAI.getGenerativeModel({ model: useModel })
       await geminiModel.generateContent('Hi')
-      return { success: true, message: 'Gemini ßB¾€³É¹¦' }
+      return { success: true, message: 'Gemini é€£ç·šæˆåŠŸ' }
     }
 
-    return { success: false, message: `²»Ö§Ô®µÄ provider: ${provider}` }
+    return { success: false, message: `ä¸æ”¯æ´çš„ provider: ${provider}` }
   } catch (err: any) {
-    const msg = err?.message ?? err?.toString() ?? 'Î´ÖªåeÕ`'
+    const msg = err?.message ?? err?.toString() ?? 'æœªçŸ¥éŒ¯èª¤'
     const shortMsg = msg.length > 150 ? msg.slice(0, 150) + '...' : msg
-    return { success: false, message: `ßB¾€Ê§”¡: ${shortMsg}` }
+    return { success: false, message: `é€£ç·šå¤±æ•—: ${shortMsg}` }
   }
 }

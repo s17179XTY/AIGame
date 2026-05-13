@@ -1,4 +1,4 @@
-﻿import { randomUUID } from 'crypto'
+import { randomUUID } from 'crypto'
 import { getDatabase } from '../database'
 import {
   World,
@@ -20,7 +20,7 @@ import {
 import { getWorld, getWorldState, updateWorldState } from './world'
 import { listCharacters, getPlayerCharacter } from './character'
 import { getSettings } from './settings'
-import { LLMProvider, OpenAIProvider, AnthropicProvider, GeminiProvider } from './llm'
+import { createLLMProvider } from './llm'
 
 export async function processGameAction(action: GameAction): Promise<GameResponse> {
   const settings = getSettings()

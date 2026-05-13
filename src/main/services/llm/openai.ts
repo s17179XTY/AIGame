@@ -5,11 +5,18 @@ import { LLMProvider } from './index'
 export class OpenAIProvider implements LLMProvider {
   private client: OpenAI | null = null
 
-  constructor(private apiKey: string, private baseUrl?: string) {}
+  constructor(
+    private apiKey: string,
+    private baseUrl: string = ''
+  ) {}
 
   private getClient(): OpenAI {
     if (!this.client) {
-      this.client = new OpenAI({ apiKey: this.apiKey, ...(this.baseUrl ? { baseURL: this.baseUrl } : {}) })
+      const opts: any = { apiKey: this.apiKey }
+      if (this.baseUrl) {
+        opts.baseURL = this.baseUrl
+      }
+      this.client = new OpenAI(opts)
     }
     return this.client
   }
@@ -35,7 +42,7 @@ export class OpenAIProvider implements LLMProvider {
 
     const response = await client.chat.completions.create(params)
 
-    const content = response.choices?.[0]?.message?.content ?? ''
+    const content = response.choices[0]?.message?.content ?? ''
 
     return {
       text: content,
