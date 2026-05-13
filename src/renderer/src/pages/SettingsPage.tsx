@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+﻿import React, { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { useSettingsStore } from '../stores/settingsStore'
 import type { AppSettings, LLMProviderType, ImageProviderType } from '../../../main/services/types'
@@ -23,28 +23,39 @@ export default function SettingsPage() {
     setForm((f) => ({ ...f, [key]: value }))
   }
 
+  const inputClass =
+    'w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-game-text placeholder-game-muted/40 focus:border-indigo-400/50 focus:bg-white/[0.06] outline-none transition-all duration-200'
+  const selectClass =
+    'w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-game-text focus:border-indigo-400/50 focus:bg-white/[0.06] outline-none transition-all duration-200 appearance-none cursor-pointer'
+
   return (
-    <div className="h-screen flex flex-col">
-      <header className="flex items-center gap-4 px-6 py-4 border-b border-game-accent/30">
-        <button onClick={() => setPage('home')} className="text-game-muted hover:text-game-text">
+    <div className="h-screen flex flex-col bg-game-bg">
+      <header className="flex items-center gap-4 px-8 py-5 border-b border-white/[0.06]">
+        <button
+          onClick={() => setPage('home')}
+          className="flex items-center gap-1.5 text-game-muted hover:text-game-text transition-colors text-sm"
+        >
           ← 返回
         </button>
-        <h1 className="text-xl font-bold text-game-highlight">設定</h1>
+        <h1 className="text-xl font-bold gradient-text">設定</h1>
       </header>
 
-      <main className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-2xl mx-auto space-y-8">
+      <main className="flex-1 overflow-y-auto p-8">
+        <div className="max-w-2xl mx-auto space-y-6">
           {/* LLM Settings */}
-          <section className="bg-game-panel rounded-xl p-6 border border-game-accent/20">
-            <h2 className="text-lg font-semibold mb-4 text-game-highlight">大語言模型 (LLM)</h2>
+          <section className="rounded-2xl bg-game-panel/60 border border-white/[0.06] p-6 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-6">
+              <span className="text-xl">🧠</span>
+              <h2 className="text-lg font-semibold text-game-text">大型語言模型 (LLM)</h2>
+            </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-game-muted mb-1">廠商</label>
+                <label className="block text-sm font-medium text-game-muted mb-2">提供商</label>
                 <select
                   value={form.llmProvider}
                   onChange={(e) => update('llmProvider', e.target.value as LLMProviderType)}
-                  className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none"
+                  className={selectClass}
                 >
                   <option value="openai">OpenAI</option>
                   <option value="anthropic">Anthropic</option>
@@ -53,62 +64,65 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="block text-sm text-game-muted mb-1">模型</label>
+                <label className="block text-sm font-medium text-game-muted mb-2">模型</label>
                 <input
                   type="text"
                   value={form.llmModel}
                   onChange={(e) => update('llmModel', e.target.value)}
                   placeholder="gpt-4o"
-                  className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-game-muted mb-1">OpenAI API Key</label>
+                <label className="block text-sm font-medium text-game-muted mb-2">OpenAI API Key</label>
                 <input
                   type="password"
                   value={form.openaiApiKey}
                   onChange={(e) => update('openaiApiKey', e.target.value)}
                   placeholder="sk-..."
-                  className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-game-muted mb-1">Anthropic API Key</label>
+                <label className="block text-sm font-medium text-game-muted mb-2">Anthropic API Key</label>
                 <input
                   type="password"
                   value={form.anthropicApiKey}
                   onChange={(e) => update('anthropicApiKey', e.target.value)}
                   placeholder="sk-ant-..."
-                  className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-game-muted mb-1">Gemini API Key</label>
+                <label className="block text-sm font-medium text-game-muted mb-2">Gemini API Key</label>
                 <input
                   type="password"
                   value={form.geminiApiKey}
                   onChange={(e) => update('geminiApiKey', e.target.value)}
                   placeholder="AIza..."
-                  className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none"
+                  className={inputClass}
                 />
               </div>
             </div>
           </section>
 
           {/* Image Settings */}
-          <section className="bg-game-panel rounded-xl p-6 border border-game-accent/20">
-            <h2 className="text-lg font-semibold mb-4 text-game-highlight">文生圖模型（可選）</h2>
+          <section className="rounded-2xl bg-game-panel/60 border border-white/[0.06] p-6 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-6">
+              <span className="text-xl">🎨</span>
+              <h2 className="text-lg font-semibold text-game-text">文生圖模型（可選）</h2>
+            </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-game-muted mb-1">廠商</label>
+                <label className="block text-sm font-medium text-game-muted mb-2">提供商</label>
                 <select
                   value={form.imageProvider}
                   onChange={(e) => update('imageProvider', e.target.value as ImageProviderType | 'none')}
-                  className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none"
+                  className={selectClass}
                 >
                   <option value="none">不使用圖片</option>
                   <option value="openai">OpenAI DALL-E</option>
@@ -119,29 +133,29 @@ export default function SettingsPage() {
               {form.imageProvider !== 'none' && (
                 <>
                   <div>
-                    <label className="block text-sm text-game-muted mb-1">生圖頻率</label>
+                    <label className="block text-sm font-medium text-game-muted mb-2">生成頻率</label>
                     <select
                       value={form.imageFrequency}
                       onChange={(e) =>
                         update('imageFrequency', e.target.value as 'conservative' | 'standard' | 'rich')
                       }
-                      className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none"
+                      className={selectClass}
                     >
                       <option value="conservative">保守（僅場景變化）</option>
-                      <option value="standard">標準（場景 + 重要行為）</option>
+                      <option value="standard">標準（場景 + 重要行動）</option>
                       <option value="rich">豐富（較多觸發）</option>
                     </select>
                   </div>
 
                   {form.imageProvider === 'stability' && (
                     <div>
-                      <label className="block text-sm text-game-muted mb-1">Stability AI API Key</label>
+                      <label className="block text-sm font-medium text-game-muted mb-2">Stability AI API Key</label>
                       <input
                         type="password"
                         value={form.stabilityApiKey}
                         onChange={(e) => update('stabilityApiKey', e.target.value)}
                         placeholder="sk-..."
-                        className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none"
+                        className={inputClass}
                       />
                     </div>
                   )}
@@ -151,16 +165,16 @@ export default function SettingsPage() {
           </section>
 
           {/* Save */}
-          <div className="flex gap-3">
+          <div className="flex gap-3 pt-2">
             <button
               onClick={handleSave}
-              className="flex-1 py-3 bg-game-highlight rounded-lg font-medium hover:bg-game-highlight/80 transition-colors"
+              className="flex-1 btn-primary py-3 rounded-xl font-medium text-sm text-white shadow-lg shadow-indigo-500/20"
             >
               儲存設定
             </button>
             <button
               onClick={() => setPage('home')}
-              className="px-6 py-3 border border-game-muted/30 rounded-lg text-game-muted hover:border-game-highlight hover:text-game-text transition-colors"
+              className="px-8 py-3 rounded-xl border border-white/[0.08] text-game-muted hover:border-indigo-400/40 hover:text-indigo-300 hover:bg-white/[0.03] transition-all duration-200"
             >
               取消
             </button>
