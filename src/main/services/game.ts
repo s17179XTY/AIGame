@@ -49,8 +49,11 @@ export async function processGameAction(action: GameAction): Promise<GameRespons
   try {
     response = await llmProvider.chat(messages, {
       model: settings.llmModel,
-      temperature: 0.8,
-      maxTokens: 4096,
+      temperature: settings.temperature,
+      maxTokens: settings.maxTokens,
+      topP: settings.topP,
+      frequencyPenalty: settings.frequencyPenalty,
+      presencePenalty: settings.presencePenalty,
       responseFormat: isLocalModel ? undefined : 'json_object',
     })
   } catch (err: any) {
@@ -59,8 +62,11 @@ export async function processGameAction(action: GameAction): Promise<GameRespons
     if (!isLocalModel && (msg.includes('response_format') || msg.includes('json_object'))) {
       response = await llmProvider.chat(messages, {
         model: settings.llmModel,
-        temperature: 0.8,
-        maxTokens: 4096,
+        temperature: settings.temperature,
+        maxTokens: settings.maxTokens,
+        topP: settings.topP,
+        frequencyPenalty: settings.frequencyPenalty,
+        presencePenalty: settings.presencePenalty,
       })
     } else {
       throw err

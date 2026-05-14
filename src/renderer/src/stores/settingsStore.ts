@@ -10,6 +10,11 @@ const DEFAULT_SETTINGS: AppSettingsType = {
   imageModel: 'dall-e-3',
   stabilityApiKey: '',
   imageFrequency: 'standard',
+  temperature: 0.8,
+  maxTokens: 4096,
+  topP: 1.0,
+  frequencyPenalty: 0,
+  presencePenalty: 0,
 }
 
 interface SettingsStore {

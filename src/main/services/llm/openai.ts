@@ -34,6 +34,9 @@ export class OpenAIProvider implements LLMProvider {
       })),
       temperature: options.temperature ?? 0.8,
       max_tokens: options.maxTokens ?? 4096,
+      top_p: options.topP,
+      frequency_penalty: options.frequencyPenalty,
+      presence_penalty: options.presencePenalty,
     }
 
     if (isJsonMode) {

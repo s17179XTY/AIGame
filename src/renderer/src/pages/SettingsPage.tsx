@@ -118,6 +118,115 @@ export default function SettingsPage() {
                 </p>
               </div>
 
+
+              {/* Model Parameters */}
+              <div className="pt-4 border-t border-game-accent/20">
+                <h3 className="text-sm font-semibold text-game-highlight mb-4">Model Parameters</h3>
+
+                <div className="space-y-5">
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-sm text-game-muted">Temperature</label>
+                      <span className="text-xs text-game-highlight font-mono bg-game-bg px-2 py-0.5 rounded">
+                        {form.temperature.toFixed(1)}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="2"
+                      step="0.1"
+                      value={form.temperature}
+                      onChange={(e) => update('temperature', parseFloat(e.target.value))}
+                      className="w-full h-2 bg-game-accent/20 rounded-lg appearance-none cursor-pointer accent-game-highlight"
+                    />
+                    <div className="flex justify-between text-xs text-game-muted/50 mt-0.5">
+                      <span>Deterministic</span>
+                      <span>Creative</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-sm text-game-muted">Top P</label>
+                      <span className="text-xs text-game-highlight font-mono bg-game-bg px-2 py-0.5 rounded">
+                        {form.topP.toFixed(2)}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={form.topP}
+                      onChange={(e) => update('topP', parseFloat(e.target.value))}
+                      className="w-full h-2 bg-game-accent/20 rounded-lg appearance-none cursor-pointer accent-game-highlight"
+                    />
+                    <div className="flex justify-between text-xs text-game-muted/50 mt-0.5">
+                      <span>0</span>
+                      <span>1</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-game-muted mb-1">Max Output Tokens</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="131072"
+                      value={form.maxTokens}
+                      onChange={(e) => update('maxTokens', parseInt(e.target.value) || 4096)}
+                      className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-sm text-game-muted">Frequency Penalty</label>
+                      <span className="text-xs text-game-highlight font-mono bg-game-bg px-2 py-0.5 rounded">
+                        {form.frequencyPenalty.toFixed(1)}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="-2"
+                      max="2"
+                      step="0.1"
+                      value={form.frequencyPenalty}
+                      onChange={(e) => update('frequencyPenalty', parseFloat(e.target.value))}
+                      className="w-full h-2 bg-game-accent/20 rounded-lg appearance-none cursor-pointer accent-game-highlight"
+                    />
+                    <div className="flex justify-between text-xs text-game-muted/50 mt-0.5">
+                      <span>-2</span>
+                      <span>0</span>
+                      <span>2</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-sm text-game-muted">Presence Penalty</label>
+                      <span className="text-xs text-game-highlight font-mono bg-game-bg px-2 py-0.5 rounded">
+                        {form.presencePenalty.toFixed(1)}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="-2"
+                      max="2"
+                      step="0.1"
+                      value={form.presencePenalty}
+                      onChange={(e) => update('presencePenalty', parseFloat(e.target.value))}
+                      className="w-full h-2 bg-game-accent/20 rounded-lg appearance-none cursor-pointer accent-game-highlight"
+                    />
+                    <div className="flex justify-between text-xs text-game-muted/50 mt-0.5">
+                      <span>-2</span>
+                      <span>0</span>
+                      <span>2</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <div className="pt-2 border-t border-game-accent/20">
                 <button
                   onClick={handleTestConnection}

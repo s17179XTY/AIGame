@@ -42,6 +42,11 @@ export class GeminiProvider implements LLMProvider {
     const chat = model.startChat({
       history: history.length > 0 ? history : undefined,
       systemInstruction: systemPrompt || undefined,
+      generationConfig: {
+        temperature: options.temperature,
+        maxOutputTokens: options.maxTokens,
+        topP: options.topP,
+      },
     })
 
     const result = await chat.sendMessage(lastMessage?.content ?? '')

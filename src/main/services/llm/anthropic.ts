@@ -33,6 +33,7 @@ export class AnthropicProvider implements LLMProvider {
       model: options.model,
       max_tokens: options.maxTokens ?? 4096,
       temperature: options.temperature ?? 0.8,
+      top_p: options.topP,
       system: systemPrompt || undefined,
       messages: conversationMessages.map((m) => ({
         role: m.role as 'user' | 'assistant',

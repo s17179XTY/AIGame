@@ -11,6 +11,13 @@ export function getSettings(): AppSettings {
       ;(settings as Record<string, unknown>)[row.key] = row.value
     }
   }
+  // Coerce numeric fields (stored as strings in key-value table)
+  const coerce = (settings as Record<string, unknown>)
+  if (typeof coerce.temperature === 'string') coerce.temperature = parseFloat(coerce.temperature as string)
+  if (typeof coerce.maxTokens === 'string') coerce.maxTokens = parseInt(coerce.maxTokens as string, 10)
+  if (typeof coerce.topP === 'string') coerce.topP = parseFloat(coerce.topP as string)
+  if (typeof coerce.frequencyPenalty === 'string') coerce.frequencyPenalty = parseFloat(coerce.frequencyPenalty as string)
+  if (typeof coerce.presencePenalty === 'string') coerce.presencePenalty = parseFloat(coerce.presencePenalty as string)
   return settings
 }
 

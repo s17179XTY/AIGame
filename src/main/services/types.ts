@@ -95,6 +95,9 @@ export interface LLMOptions {
   model: string
   temperature?: number
   maxTokens?: number
+  topP?: number
+  frequencyPenalty?: number
+  presencePenalty?: number
   responseFormat?: 'text' | 'json_object'
 }
 
@@ -204,6 +207,11 @@ export interface AppSettings {
   imageModel: string
   stabilityApiKey: string
   imageFrequency: 'conservative' | 'standard' | 'rich'
+  temperature: number
+  maxTokens: number
+  topP: number
+  frequencyPenalty: number
+  presencePenalty: number
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -215,6 +223,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
   imageModel: 'dall-e-3',
   stabilityApiKey: '',
   imageFrequency: 'standard',
+  temperature: 0.8,
+  maxTokens: 4096,
+  topP: 1.0,
+  frequencyPenalty: 0,
+  presencePenalty: 0,
 }
 
 // --- Game Types ---
