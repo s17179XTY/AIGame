@@ -1,4 +1,4 @@
-import { LLMMessage, LLMOptions, LLMResponse, AppSettings } from '../types'
+import { LLMMessage, LLMOptions, LLMResponse, LLMConfig } from '../types'
 import { OpenAIProvider } from './openai'
 import { AnthropicProvider } from './anthropic'
 import { GeminiProvider } from './gemini'
@@ -7,19 +7,19 @@ export interface LLMProvider {
   chat(messages: LLMMessage[], options: LLMOptions): Promise<LLMResponse>
 }
 
-export function createLLMProvider(settings: AppSettings): LLMProvider {
-  switch (settings.llmProvider) {
+export function createLLMProvider(config: LLMConfig): LLMProvider {
+  switch (config.provider) {
     case 'openai':
-      if (!settings.apiKey) throw new Error('API Key not configured')
-      return new OpenAIProvider(settings.apiKey, settings.apiBaseUrl)
+      if (!config.apiKey) throw new Error('API Key not configured')
+      return new OpenAIProvider(config.apiKey, config.apiBaseUrl)
     case 'anthropic':
-      if (!settings.apiKey) throw new Error('API Key not configured')
-      return new AnthropicProvider(settings.apiKey, settings.apiBaseUrl)
+      if (!config.apiKey) throw new Error('API Key not configured')
+      return new AnthropicProvider(config.apiKey, config.apiBaseUrl)
     case 'gemini':
-      if (!settings.apiKey) throw new Error('API Key not configured')
-      return new GeminiProvider(settings.apiKey, settings.llmModel, settings.apiBaseUrl)
+      if (!config.apiKey) throw new Error('API Key not configured')
+      return new GeminiProvider(config.apiKey, config.model, config.apiBaseUrl)
     default:
-      throw new Error(`Unsupported LLM provider: ${settings.llmProvider}`)
+      throw new Error(`Unsupported LLM provider: ${config.provider}`)
   }
 }
 

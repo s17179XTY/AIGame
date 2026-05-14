@@ -19,11 +19,12 @@ import {
 } from './types'
 import { getWorld, getWorldState, updateWorldState } from './world'
 import { listCharacters, getPlayerCharacter } from './character'
-import { getSettings } from './settings'
+import { getSettings, getActiveConfig } from './settings'
 import { createLLMProvider } from './llm'
 
 export async function processGameAction(action: GameAction): Promise<GameResponse> {
-  const settings = getSettings()
+  const config = getActiveConfig()
+  if (!config) throw new Error('No active LLM config set')
   const world = getWorld(action.worldId)
   if (!world) throw new Error('World not found')
 
@@ -38,22 +39,22 @@ export async function processGameAction(action: GameAction): Promise<GameRespons
   const messages = buildPrompt(world, worldState, characters, player, action.playerInput)
 
   // Call LLM
-  const llmProvider = getLLMProvider(settings)
-  const isLocalModel = settings.apiBaseUrl && (
-    settings.apiBaseUrl.includes('localhost') ||
-    settings.apiBaseUrl.includes('127.0.0.1') ||
-    settings.apiBaseUrl.includes('192.168.')
+  const llmProvider = createLLMProvider(config)
+  const isLocalModel = config.apiBaseUrl && (
+    config.apiBaseUrl.includes('localhost') ||
+    config.apiBaseUrl.includes('127.0.0.1') ||
+    config.apiBaseUrl.includes('192.168.')
   )
 
   let response: any
   try {
     response = await llmProvider.chat(messages, {
-      model: settings.llmModel,
-      temperature: settings.temperature,
-      maxTokens: settings.maxTokens,
-      topP: settings.topP,
-      frequencyPenalty: settings.frequencyPenalty,
-      presencePenalty: settings.presencePenalty,
+      model: config.model,
+      temperature: config.temperature,
+      maxTokens: config.maxTokens,
+      topP: config.topP,
+      frequencyPenalty: config.frequencyPenalty,
+      presencePenalty: config.presencePenalty,
       responseFormat: isLocalModel ? undefined : 'json_object',
     })
   } catch (err: any) {
@@ -61,12 +62,12 @@ export async function processGameAction(action: GameAction): Promise<GameRespons
     // If json_object caused the error, retry without it
     if (!isLocalModel && (msg.includes('response_format') || msg.includes('json_object'))) {
       response = await llmProvider.chat(messages, {
-        model: settings.llmModel,
-        temperature: settings.temperature,
-        maxTokens: settings.maxTokens,
-        topP: settings.topP,
-        frequencyPenalty: settings.frequencyPenalty,
-        presencePenalty: settings.presencePenalty,
+        model: config.model,
+        temperature: config.temperature,
+        maxTokens: config.maxTokens,
+        topP: config.topP,
+        frequencyPenalty: config.frequencyPenalty,
+        presencePenalty: config.presencePenalty,
       })
     } else {
       throw err
@@ -80,7 +81,8 @@ export async function processGameAction(action: GameAction): Promise<GameRespons
   processStateUpdate(action.worldId, worldState, output.stateUpdate, characters)
 
   // Check for image trigger
-  const imageTrigger = evaluateImageTrigger(output.imageTrigger, worldState, settings)
+  const imageSettings = getSettings()
+  const imageTrigger = evaluateImageTrigger(output.imageTrigger, worldState, imageSettings)
 
   // Handle new character requests
   const newCharacterRequests = output.newCharacters ?? []
@@ -463,8 +465,6 @@ function createStoryEntries(
 
   return entries
 }
-
-function getLLMProvider(settings: AppSettings): ReturnType<typeof createLLMProvider> { return createLLMProvider(settings) }
 
 export function getStoryLog(
   worldId: string,

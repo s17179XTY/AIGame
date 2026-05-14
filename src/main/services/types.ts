@@ -196,38 +196,55 @@ export interface StoryEntry {
   createdAt: string
 }
 
-// --- Settings Types ---
+// --- LLM Config Types ---
 
-export interface AppSettings {
-  llmProvider: LLMProviderType
-  llmModel: string
+export interface LLMConfig {
+  id: string
+  name: string
+  provider: LLMProviderType
+  model: string
   apiKey: string
   apiBaseUrl: string
-  imageProvider: ImageProviderType | 'none'
-  imageModel: string
-  stabilityApiKey: string
-  imageFrequency: 'conservative' | 'standard' | 'rich'
   temperature: number
   maxTokens: number
   topP: number
   frequencyPenalty: number
   presencePenalty: number
+  createdAt: string
+  updatedAt: string
 }
 
-export const DEFAULT_SETTINGS: AppSettings = {
-  llmProvider: 'openai',
-  llmModel: 'gpt-4o',
+export const DEFAULT_LLM_CONFIG: Omit<LLMConfig, 'id' | 'createdAt' | 'updatedAt'> = {
+  name: 'Default',
+  provider: 'openai',
+  model: 'gpt-4o',
   apiKey: '',
   apiBaseUrl: '',
-  imageProvider: 'none',
-  imageModel: 'dall-e-3',
-  stabilityApiKey: '',
-  imageFrequency: 'standard',
   temperature: 0.8,
   maxTokens: 4096,
   topP: 1.0,
   frequencyPenalty: 0,
   presencePenalty: 0,
+}
+
+// --- Settings Types ---
+
+export interface AppSettings {
+  activeLlmConfigId: string | null
+  apiKey: string
+  imageProvider: ImageProviderType | 'none'
+  imageModel: string
+  stabilityApiKey: string
+  imageFrequency: 'conservative' | 'standard' | 'rich'
+}
+
+export const DEFAULT_SETTINGS: AppSettings = {
+  activeLlmConfigId: null,
+  apiKey: '',
+  imageProvider: 'none',
+  imageModel: 'dall-e-3',
+  stabilityApiKey: '',
+  imageFrequency: 'standard',
 }
 
 // --- Game Types ---
@@ -278,6 +295,15 @@ export const IPC_CHANNELS = {
   SETTINGS_GET: 'settings:get',
   SETTINGS_TEST_LLM: 'settings:test-llm',
   SETTINGS_UPDATE: 'settings:update',
+
+  // LLM Configs
+  CONFIG_LIST: 'config:list',
+  CONFIG_GET: 'config:get',
+  CONFIG_CREATE: 'config:create',
+  CONFIG_UPDATE: 'config:update',
+  CONFIG_DELETE: 'config:delete',
+  CONFIG_SET_ACTIVE: 'config:set-active',
+  CONFIG_PING: 'config:ping',
 
   // Story
   STORY_GET_LOG: 'story:get-log',

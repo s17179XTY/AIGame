@@ -3,7 +3,7 @@ import { IPC_CHANNELS, WorldConfig } from './services/types'
 import { createWorld, getWorld, listWorlds, updateWorld, deleteWorld, getWorldState } from './services/world'
 import { createCharacter, getCharacter, listCharacters, updateCharacter, deleteCharacter } from './services/character'
 import { processGameAction, getStoryLog } from './services/game'
-import { getSettings, updateSettings, testLLMConnection } from './services/settings'
+import { getSettings, updateSettings, testLLMConnection, listConfigs, getConfig, createConfig, updateConfig, deleteConfig, setActiveConfig, getActiveConfig, pingConfig } from './services/settings'
 import { OpenAIImageProvider, StabilityImageProvider } from './services/image'
 
 export function registerIpcHandlers(): void {
@@ -65,7 +65,9 @@ export function registerIpcHandlers(): void {
 
     let provider
     if (settings.imageProvider === 'openai') {
-      provider = new OpenAIImageProvider(settings.apiKey)
+      const activeCfg = getActiveConfig()
+      const imageKey = (activeCfg && activeCfg.provider === 'openai') ? activeCfg.apiKey : settings.apiKey
+      provider = new OpenAIImageProvider(imageKey)
     } else if (settings.imageProvider === 'stability') {
       provider = new StabilityImageProvider(settings.stabilityApiKey)
     } else {
@@ -125,6 +127,35 @@ export function registerIpcHandlers(): void {
     return updateSettings(updates)
   })
 
+
+  // ---- LLM Config handlers ----
+  ipcMain.handle(IPC_CHANNELS.CONFIG_LIST, () => {
+    return listConfigs()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.CONFIG_GET, (_event, id: string) => {
+    return getConfig(id)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.CONFIG_CREATE, (_event, input: any) => {
+    return createConfig(input)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.CONFIG_UPDATE, (_event, id: string, patches: any) => {
+    return updateConfig(id, patches)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.CONFIG_DELETE, (_event, id: string) => {
+    return deleteConfig(id)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.CONFIG_SET_ACTIVE, (_event, id: string | null) => {
+    setActiveConfig(id)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.CONFIG_PING, async (_event, config: any) => {
+    return pingConfig(config)
+  })
   // ---- Story handlers ----
   ipcMain.handle(IPC_CHANNELS.STORY_GET_LOG, (_event, worldId: string, limit: number, offset: number) => {
     return getStoryLog(worldId, limit, offset)

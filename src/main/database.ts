@@ -73,7 +73,23 @@ function initializeSchema(db: Database.Database): void {
       FOREIGN KEY (speaker_id) REFERENCES characters(id) ON DELETE SET NULL
     );
 
-    CREATE TABLE IF NOT EXISTS settings (
+    CREATE TABLE IF NOT EXISTS llm_configs (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      provider TEXT NOT NULL DEFAULT 'openai',
+      model TEXT NOT NULL DEFAULT 'gpt-4o',
+      api_key TEXT NOT NULL DEFAULT '',
+      api_base_url TEXT NOT NULL DEFAULT '',
+      temperature REAL NOT NULL DEFAULT 0.8,
+      max_tokens INTEGER NOT NULL DEFAULT 4096,
+      top_p REAL NOT NULL DEFAULT 1.0,
+      frequency_penalty REAL NOT NULL DEFAULT 0,
+      presence_penalty REAL NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+        CREATE TABLE IF NOT EXISTS settings (
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
     );

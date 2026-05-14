@@ -41,6 +41,17 @@ const api = {
     update: (updates: any) => ipcRenderer.invoke('settings:update', updates),
   },
 
+
+  // LLM Configs
+  config: {
+    list: () => ipcRenderer.invoke('config:list'),
+    get: (id: string) => ipcRenderer.invoke('config:get', id),
+    create: (input: any) => ipcRenderer.invoke('config:create', input),
+    update: (id: string, patches: any) => ipcRenderer.invoke('config:update', id, patches),
+    delete: (id: string) => ipcRenderer.invoke('config:delete', id),
+    setActive: (id: string | null) => ipcRenderer.invoke('config:set-active', id),
+    ping: (config: any) => ipcRenderer.invoke('config:ping', config),
+  },
   // Story
   story: {
     getLog: (worldId: string, limit?: number, offset?: number) =>
