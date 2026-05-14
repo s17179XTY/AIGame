@@ -312,6 +312,7 @@ export default function GamePage() {
                 disabled={store.isProcessing}
                 placeholder="輸入你的行動或對話... (Enter 發送, Shift+Enter 換行)"
                 className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-game-text placeholder-game-muted/40 focus:border-indigo-500/40 focus:bg-white/[0.06] outline-none transition-all duration-200 disabled:opacity-50 resize-none min-h-[42px] max-h-[200px]"
+>
               </textarea>
               
               <button
