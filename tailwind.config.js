@@ -1,23 +1,24 @@
-﻿/** @type {import('tailwindcss').Config} */
+/** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ['./src/renderer/index.html', './src/renderer/src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
         game: {
-          bg: '#0b1120',
-          panel: '#1e293b',
-          accent: '#334155',
+          bg: '#09090b',
+          panel: '#18181b',
+          accent: '#27272a',
           highlight: '#6366f1',
           'highlight-soft': '#818cf8',
-          text: '#f1f5f9',
-          muted: '#94a3b8',
-          success: '#34d399',
-          danger: '#f87171',
+          text: '#fafafa',
+          muted: '#a1a1aa',
+          success: '#22c55e',
+          danger: '#ef4444',
+          warning: '#f59e0b',
           bubble: {
-            player: '#312e81',
-            npc: '#1e293b',
-            narration: '#0f172a',
+            player: '#3f3f46',
+            npc: '#18181b',
+            narration: '#18181b',
           },
         },
       },
@@ -42,10 +43,10 @@ module.exports = {
         },
         glow: {
           '0%': { boxShadow: '0 0 5px rgba(99,102,241,0.3)' },
-          '100%': { boxShadow: '0 0 20px rgba(99,102,241,0.6)' },
+          '100%': { boxShadow: '0 0 20px rgba(99,102,241,0.5)' },
         },
       },
     },
   },
   plugins: [],
-}
+};

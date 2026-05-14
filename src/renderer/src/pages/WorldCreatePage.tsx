@@ -82,9 +82,9 @@ export default function WorldCreatePage() {
   }
 
   const inputClass =
-    'w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-game-text placeholder-game-muted/40 focus:border-indigo-400/50 focus:bg-white/[0.06] outline-none transition-all duration-200'
+    'w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-game-text placeholder-game-muted/40 focus:border-indigo-500/40 focus:bg-white/[0.06] outline-none transition-all duration-200'
   const textareaClass =
-    'w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-game-text placeholder-game-muted/40 focus:border-indigo-400/50 focus:bg-white/[0.06] outline-none transition-all duration-200 resize-none'
+    'w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-game-text placeholder-game-muted/40 focus:border-indigo-500/40 focus:bg-white/[0.06] outline-none transition-all duration-200 resize-none'
 
   return (
     <div className="h-screen flex flex-col bg-game-bg">
@@ -186,7 +186,7 @@ export default function WorldCreatePage() {
               </div>
               <button
                 onClick={addImportantChar}
-                className="px-4 py-2 text-sm rounded-xl border border-indigo-400/30 text-indigo-300 hover:bg-indigo-500/10 hover:border-indigo-400/50 transition-all duration-200"
+                className="px-4 py-2 text-sm rounded-xl border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/[0.06] hover:border-indigo-500/40 transition-all duration-200"
               >
                 + 新增角色
               </button>

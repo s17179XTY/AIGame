@@ -1,4 +1,4 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -12,8 +12,8 @@ body {
   font-family: 'Inter', 'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', 'Noto Sans TC', system-ui, sans-serif;
   overflow: hidden;
   user-select: none;
-  background: #0b1120;
-  color: #f1f5f9;
+  background: #09090b;
+  color: #fafafa;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -23,20 +23,20 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: #18181b;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #3f3f46;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #52525b;
 }
 
 ::selection {
-  background: rgba(99, 102, 241, 0.3);
+  background: rgba(99, 102, 241, 0.25);
 }
 
 input, textarea, select {
@@ -44,7 +44,7 @@ input, textarea, select {
 }
 
 input:focus, textarea:focus, select:focus {
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 
 .chat-bubble-enter {
@@ -61,9 +61,9 @@ input:focus, textarea:focus, select:focus {
 
 @layer utilities {
   .glass-panel {
-    background: rgba(30, 41, 59, 0.7);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(99, 102, 241, 0.1);
+    background: rgba(24, 24, 27, 0.8);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(99, 102, 241, 0.08);
   }
 
   .gradient-text {
@@ -75,11 +75,12 @@ input:focus, textarea:focus, select:focus {
 
   .btn-primary {
     background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: #ffffff;
     transition: all 0.2s ease;
   }
 
   .btn-primary:hover {
     background: linear-gradient(135deg, #818cf8, #6366f1);
-    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
   }
 }

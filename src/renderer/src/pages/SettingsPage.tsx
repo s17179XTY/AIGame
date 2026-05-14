@@ -56,14 +56,14 @@ export default function SettingsPage() {
         <button onClick={() => setPage('home')} className="text-game-muted hover:text-game-text">
           &larr; Back
         </button>
-        <h1 className="text-xl font-bold text-game-highlight">Settings</h1>
+        <h1 className="text-xl font-bold text-indigo-400">Settings</h1>
       </header>
 
       <main className="flex-1 overflow-y-auto p-6">
         <div className="max-w-2xl mx-auto space-y-8">
           {/* LLM Settings */}
           <section className="bg-game-panel rounded-xl p-6 border border-game-accent/20">
-            <h2 className="text-lg font-semibold mb-4 text-game-highlight">LLM Configuration</h2>
+            <h2 className="text-lg font-semibold mb-4 text-indigo-400">LLM Configuration</h2>
 
             <div className="space-y-4">
               <div>
@@ -122,12 +122,12 @@ export default function SettingsPage() {
                 <button
                   onClick={handleTestConnection}
                   disabled={testing}
-                  className="px-4 py-2 text-sm border border-game-highlight/50 text-game-highlight rounded-lg hover:bg-game-highlight/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 text-sm border border-indigo-500/40 text-indigo-400 rounded-lg hover:bg-indigo-500/[0.06] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {testing ? 'Testing...' : 'Test Connection'}
                 </button>
                 {testResult && (
-                  <p className={`mt-2 text-sm ${testResult.success ? 'text-green-400' : 'text-red-400'}`}>
+                  <p className={`mt-2 text-sm ${testResult.success ? 'text-game-success' : 'text-game-danger'}`}>
                     {testResult.success ? 'OK: ' : 'FAIL: '}
                     {testResult.message}
                   </p>
@@ -138,7 +138,7 @@ export default function SettingsPage() {
 
           {/* Image Settings */}
           <section className="bg-game-panel rounded-xl p-6 border border-game-accent/20">
-            <h2 className="text-lg font-semibold mb-4 text-game-highlight">Image Generation (Optional)</h2>
+            <h2 className="text-lg font-semibold mb-4 text-indigo-400">Image Generation (Optional)</h2>
 
             <div className="space-y-4">
               <div>
@@ -191,7 +191,7 @@ export default function SettingsPage() {
           <div className="flex gap-3">
             <button
               onClick={handleSave}
-              className="flex-1 py-3 bg-game-highlight rounded-lg font-medium hover:bg-game-highlight/80 transition-colors"
+              className="flex-1 py-3 bg-indigo-500 rounded-lg font-medium hover:bg-indigo-500/80 transition-colors"
             >
               Save Settings
             </button>
