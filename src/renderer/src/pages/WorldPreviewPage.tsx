@@ -6,7 +6,7 @@ export default function WorldPreviewPage() {
 
   return (
     <div className="h-screen flex flex-col bg-game-bg">
-      <header className="flex items-center gap-4 px-8 py-5 border-b border-white/[0.06]">
+      <header className="flex items-center gap-4 px-8 py-5 border-b border-white/[0.07]">
         <button
           onClick={() => setPage('home')}
           className="flex items-center gap-1.5 text-game-muted hover:text-game-text transition-colors text-sm"

@@ -82,13 +82,13 @@ export default function WorldCreatePage() {
   }
 
   const inputClass =
-    'w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-game-text placeholder-game-muted/40 focus:border-indigo-500/40 focus:bg-white/[0.06] outline-none transition-all duration-200'
+    'w-full bg-white/[0.05] border border-white/[0.10] rounded-xl px-4 py-2.5 text-game-text placeholder-game-muted/40 focus:border-indigo-500/40 focus:bg-white/[0.07] outline-none transition-all duration-200'
   const textareaClass =
-    'w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-game-text placeholder-game-muted/40 focus:border-indigo-500/40 focus:bg-white/[0.06] outline-none transition-all duration-200 resize-none'
+    'w-full bg-white/[0.05] border border-white/[0.10] rounded-xl px-4 py-2.5 text-game-text placeholder-game-muted/40 focus:border-indigo-500/40 focus:bg-white/[0.07] outline-none transition-all duration-200 resize-none'
 
   return (
     <div className="h-screen flex flex-col bg-game-bg">
-      <header className="flex items-center gap-4 px-8 py-5 border-b border-white/[0.06]">
+      <header className="flex items-center gap-4 px-8 py-5 border-b border-white/[0.07]">
         <button
           onClick={() => setPage('home')}
           className="flex items-center gap-1.5 text-game-muted hover:text-game-text transition-colors text-sm"
@@ -101,7 +101,7 @@ export default function WorldCreatePage() {
       <main className="flex-1 overflow-y-auto p-8">
         <div className="max-w-3xl mx-auto space-y-6">
           {/* World Config */}
-          <section className="rounded-2xl bg-game-panel/60 border border-white/[0.06] p-6 backdrop-blur-sm">
+          <section className="rounded-2xl bg-game-panel/60 border border-white/[0.07] p-6 backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-6">
               <span className="text-xl">🌍</span>
               <h2 className="text-lg font-semibold text-game-text">世界設定</h2>
@@ -169,7 +169,7 @@ export default function WorldCreatePage() {
           </section>
 
           {/* Player Character */}
-          <section className="rounded-2xl bg-game-panel/60 border border-white/[0.06] p-6 backdrop-blur-sm">
+          <section className="rounded-2xl bg-game-panel/60 border border-white/[0.07] p-6 backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-6">
               <span className="text-xl">🦸</span>
               <h2 className="text-lg font-semibold text-game-text">主角設定（你）</h2>
@@ -178,7 +178,7 @@ export default function WorldCreatePage() {
           </section>
 
           {/* Important Characters */}
-          <section className="rounded-2xl bg-game-panel/60 border border-white/[0.06] p-6 backdrop-blur-sm">
+          <section className="rounded-2xl bg-game-panel/60 border border-white/[0.07] p-6 backdrop-blur-sm">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <span className="text-xl">👥</span>
@@ -197,7 +197,7 @@ export default function WorldCreatePage() {
             )}
 
             {importantChars.map((char, i) => (
-              <div key={i} className="mt-4 p-5 rounded-xl border border-white/[0.08] relative bg-white/[0.02]">
+              <div key={i} className="mt-4 p-5 rounded-xl border border-white/[0.10] relative bg-white/[0.02]">
                 <button
                   onClick={() => removeImportantChar(i)}
                   className="absolute top-3 right-3 w-7 h-7 rounded-lg flex items-center justify-center text-red-400/60 hover:text-red-300 hover:bg-red-500/10 transition-all duration-200 text-sm"

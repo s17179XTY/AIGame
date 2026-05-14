@@ -5,20 +5,20 @@ module.exports = {
     extend: {
       colors: {
         game: {
-          bg: '#09090b',
-          panel: '#18181b',
-          accent: '#27272a',
+          bg: '#1e1e24',
+          panel: '#25252d',
+          accent: '#2e2e38',
           highlight: '#6366f1',
           'highlight-soft': '#818cf8',
-          text: '#fafafa',
-          muted: '#a1a1aa',
+          text: '#e1e1e6',
+          muted: '#8b8b96',
           success: '#22c55e',
           danger: '#ef4444',
           warning: '#f59e0b',
           bubble: {
-            player: '#3f3f46',
-            npc: '#18181b',
-            narration: '#18181b',
+            player: '#4a4a56',
+            npc: '#25252d',
+            narration: '#1e1e26',
           },
         },
       },

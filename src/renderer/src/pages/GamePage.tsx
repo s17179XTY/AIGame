@@ -176,15 +176,15 @@ export default function GamePage() {
   return (
     <div className="h-screen flex flex-col bg-game-bg">
       {/* Top Bar */}
-      <header className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.06] bg-game-panel/60 backdrop-blur-sm shrink-0">
+      <header className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.07] bg-game-panel/60 backdrop-blur-sm shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => setPage('home')}
-            className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg text-game-muted hover:text-game-text hover:bg-white/[0.04] transition-colors shrink-0"
+            className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg text-game-muted hover:text-game-text hover:bg-white/[0.05] transition-colors shrink-0"
           >
             ← 返回
           </button>
-          <div className="h-4 w-px bg-white/[0.08] shrink-0" />
+          <div className="h-4 w-px bg-white/[0.10] shrink-0" />
           <h1 className="text-sm font-semibold text-game-text truncate">{world.name}</h1>
         </div>
 
@@ -194,7 +194,7 @@ export default function GamePage() {
               <button
                 onClick={handleManualImageGen}
                 disabled={store.isGeneratingImage}
-                className="px-2.5 py-1.5 text-xs rounded-lg border border-white/[0.08] text-game-muted hover:text-indigo-400 hover:border-indigo-500/40 hover:bg-indigo-500/[0.06] transition-all disabled:opacity-40"
+                className="px-2.5 py-1.5 text-xs rounded-lg border border-white/[0.10] text-game-muted hover:text-indigo-400 hover:border-indigo-500/40 hover:bg-indigo-500/[0.06] transition-all disabled:opacity-40"
                 title="生成場景插畫"
               >
                 🎲 生成插畫
@@ -206,7 +206,7 @@ export default function GamePage() {
                   const handle = document.querySelector('[data-resize-handle]');
                   if (handle) handle.classList.toggle('hidden');
                 }}
-                className="px-2.5 py-1.5 text-xs rounded-lg border border-white/[0.08] text-game-muted hover:text-game-text hover:border-white/[0.15] transition-all"
+                className="px-2.5 py-1.5 text-xs rounded-lg border border-white/[0.10] text-game-muted hover:text-game-text hover:border-white/[0.15] transition-all"
                 title="顯示/隱藏場景面板"
               >
                 🖼 隱藏
@@ -215,7 +215,7 @@ export default function GamePage() {
           )}
           <button
             onClick={() => setPage('story-log')}
-            className="px-2.5 py-1.5 text-xs rounded-lg border border-white/[0.08] text-game-muted hover:text-game-text hover:border-white/[0.15] transition-all"
+            className="px-2.5 py-1.5 text-xs rounded-lg border border-white/[0.10] text-game-muted hover:text-game-text hover:border-white/[0.15] transition-all"
           >
             📜 故事記錄
           </button>
@@ -237,7 +237,7 @@ export default function GamePage() {
                 {pendingChars.map((char, i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08]"
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/[0.05] border border-white/[0.10]"
                   >
                     <span className="text-xs text-game-text font-medium">{char.name}</span>
                     <span className="text-xs text-game-muted">
@@ -251,7 +251,7 @@ export default function GamePage() {
                     </button>
                     <button
                       onClick={() => handleSkipNewCharacter(i)}
-                      className="px-2 py-0.5 text-xs rounded-md bg-white/[0.04] text-game-muted hover:text-game-text transition-colors"
+                      className="px-2 py-0.5 text-xs rounded-md bg-white/[0.05] text-game-muted hover:text-game-text transition-colors"
                     >
                       跳過
                     </button>
@@ -262,8 +262,8 @@ export default function GamePage() {
           )}
 
           {/* Chat Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 scroll-smooth">
-            <div className="space-y-4">
+          <div className="flex-1 overflow-y-auto px-8 py-6 scroll-smooth">
+            <div className="max-w-3xl mx-auto space-y-4">
               {store.entries.length === 0 && (
                 <div className="text-center py-16">
                   <div className="text-5xl mb-4 opacity-20">📖</div>
@@ -285,7 +285,7 @@ export default function GamePage() {
               {/* Processing indicator */}
               {store.isProcessing && (
                 <div className="flex justify-center py-3">
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.06]">
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.05] border border-white/[0.07]">
                     <div className="flex gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-indigo-500/60 generating-pulse" />
                       <span className="w-1.5 h-1.5 rounded-full bg-indigo-500/60 generating-pulse" style={{ animationDelay: '0.2s' }} />
@@ -301,8 +301,8 @@ export default function GamePage() {
           </div>
 
           {/* Input Area */}
-          <div className="px-4 py-3 border-t border-white/[0.06] bg-game-panel/50 backdrop-blur-sm shrink-0">
-            <div className="flex gap-2 items-end">
+          <div className="px-8 py-4 border-t border-white/[0.07] bg-game-panel/50 backdrop-blur-sm shrink-0">
+            <div className="max-w-3xl mx-auto flex gap-3 items-end">
               <textarea
                 ref={inputRef}
                 rows={1}
@@ -311,7 +311,7 @@ export default function GamePage() {
                 onKeyDown={(e) => { const ta = e.target as HTMLTextAreaElement; ta.style.height = "auto"; ta.style.height = ta.scrollHeight + "px"; handleKeyDown(e); }}
                 disabled={store.isProcessing}
                 placeholder="輸入你的行動或對話... (Enter 發送, Shift+Enter 換行)"
-                className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-game-text placeholder-game-muted/40 focus:border-indigo-500/40 focus:bg-white/[0.06] outline-none transition-all duration-200 disabled:opacity-50 resize-none min-h-[42px] max-h-[200px]"
+                className="flex-1 bg-white/[0.05] border border-white/[0.10] rounded-xl px-4 py-3 text-sm text-game-text placeholder-game-muted/40 focus:border-indigo-500/40 focus:bg-white/[0.07] outline-none transition-all duration-200 disabled:opacity-50 resize-none min-h-[42px] max-h-[200px]"
 >
               </textarea>
               
@@ -353,7 +353,7 @@ export default function GamePage() {
               document.body.style.cursor = 'col-resize';
             }}
           >
-            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-white/[0.06] group-hover:bg-indigo-500/30" />
+            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-white/[0.07] group-hover:bg-indigo-500/30" />
           </div>
         )}
 
@@ -361,7 +361,7 @@ export default function GamePage() {
         {settings.imageProvider !== 'none' && (
           <div
             data-right-panel
-            className="w-80 shrink-0 border-l border-white/[0.06] bg-game-panel/30 flex flex-col"
+            className="w-80 shrink-0 border-l border-white/[0.07] bg-game-panel/30 flex flex-col"
           >
             <div className="flex-1 flex items-center justify-center p-6 overflow-hidden">
               {store.isGeneratingImage ? (
@@ -385,18 +385,18 @@ export default function GamePage() {
             </div>
 
             {store.worldState && (
-              <div className="p-4 border-t border-white/[0.06] bg-game-panel/60 backdrop-blur-sm">
+              <div className="p-4 border-t border-white/[0.07] bg-game-panel/60 backdrop-blur-sm">
                 <p className="font-semibold text-game-text mb-2">{store.worldState.scene}</p>
                 <div className="flex items-center gap-3 text-xs text-game-muted">
                   <span>🕐 {store.worldState.time}</span>
                   <span>🌤 {store.worldState.weather}</span>
                 </div>
                 {characters.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-white/[0.06]">
+                  <div className="mt-3 pt-3 border-t border-white/[0.07]">
                     <p className="text-xs text-game-muted/60 mb-1.5">在場角色</p>
                     <div className="flex flex-wrap gap-1.5">
                       {characters.slice(0, 8).map((c) => (
-                        <span key={c.id} className="inline-block px-2 py-0.5 text-xs rounded-md bg-white/[0.04] border border-white/[0.06] text-game-muted">
+                        <span key={c.id} className="inline-block px-2 py-0.5 text-xs rounded-md bg-white/[0.05] border border-white/[0.07] text-game-muted">
                           {c.name}
                         </span>
                       ))}
@@ -429,7 +429,7 @@ function ChatBubble({
   if (isNarration) {
     return (
       <div className="chat-bubble-enter flex justify-center">
-        <div className="max-w-lg px-6 py-3 rounded-2xl bg-white/[0.03] border border-white/[0.04] text-center">
+        <div className="max-w-xl px-6 py-3 rounded-2xl bg-white/[0.03] border border-white/[0.05] text-center">
           <p className="text-sm text-game-muted italic leading-relaxed">{entry.content}</p>
         </div>
       </div>
@@ -448,13 +448,13 @@ function ChatBubble({
 
   return (
     <div className={`chat-bubble-enter flex ${isPlayer ? 'justify-end' : 'justify-start'}`}>
-      <div className={`flex gap-2.5 max-w-[75%] ${isPlayer ? 'flex-row-reverse' : ''}`}>
+      <div className={`flex gap-2.5 max-w-[70%] ${isPlayer ? 'flex-row-reverse' : ''}`}>
         {/* Avatar */}
         <div
           className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 shadow-lg ${
             isPlayer
               ? 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-indigo-500/25'
-              : 'bg-game-panel text-game-muted ring-1 ring-white/[0.08]'
+              : 'bg-game-panel text-game-muted ring-1 ring-white/[0.10]'
           }`}
         >
           {entry.speakerName.charAt(0)}
@@ -470,8 +470,8 @@ function ChatBubble({
           <div
             className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
               isPlayer
-                ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-stone-900 rounded-tr-md shadow-lg shadow-indigo-500/20'
-                : 'bg-game-panel/80 text-game-text rounded-tl-md border border-white/[0.06]'
+                ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white rounded-tr-md shadow-lg shadow-indigo-500/20'
+                : 'bg-game-panel/80 text-game-text rounded-tl-md border border-white/[0.07]'
             }`}
           >
             <p>{entry.content}</p>

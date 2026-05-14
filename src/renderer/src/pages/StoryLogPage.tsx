@@ -49,7 +49,7 @@ export default function StoryLogPage() {
 
   return (
     <div className="h-screen flex flex-col bg-game-bg">
-      <header className="flex items-center gap-4 px-8 py-5 border-b border-white/[0.06]">
+      <header className="flex items-center gap-4 px-8 py-5 border-b border-white/[0.07]">
         <button
           onClick={() => setPage('game')}
           className="flex items-center gap-1.5 text-game-muted hover:text-game-text transition-colors text-sm"
@@ -71,7 +71,7 @@ export default function StoryLogPage() {
           ) : (
             <div className="relative">
               {/* Timeline line */}
-              <div className="absolute left-5 top-0 bottom-0 w-px bg-gradient-to-b from-indigo-500/40 via-white/[0.06] to-transparent" />
+              <div className="absolute left-5 top-0 bottom-0 w-px bg-gradient-to-b from-indigo-500/40 via-white/[0.07] to-transparent" />
 
               <div className="space-y-4">
                 {entries.map((entry) => (
@@ -89,7 +89,7 @@ export default function StoryLogPage() {
                         <span className="text-xs text-game-muted/50">
                           {new Date(entry.createdAt).toLocaleTimeString('zh-TW')}
                         </span>
-                        <span className="text-xs px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.06] text-game-muted">
+                        <span className="text-xs px-2 py-0.5 rounded-md bg-white/[0.05] border border-white/[0.07] text-game-muted">
                           {typeLabel(entry.type)}
                         </span>
                       </div>
