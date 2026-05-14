@@ -23,7 +23,7 @@ export default function GamePage() {
   const [pendingChars, setPendingChars] = useState<NewCharacterRequest[]>([])
 
   const chatEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
 
   // Load initial data
   useEffect(() => {
@@ -64,7 +64,7 @@ export default function GamePage() {
 
   // Focus input
   useEffect(() => {
-    if (loaded) inputRef.current?.focus()
+    if (loaded) { setTimeout(() => inputRef.current?.focus(), 100) }
   }, [loaded])
 
   const handleSend = useCallback(async () => {
@@ -175,79 +175,104 @@ export default function GamePage() {
 
   return (
     <div className="h-screen flex flex-col bg-game-bg">
-      {/* Header */}
-      <header className="flex items-center justify-between px-6 py-3.5 border-b border-white/[0.06] bg-game-bg/80 backdrop-blur-sm shrink-0">
-        <div className="flex items-center gap-3">
+      {/* Top Bar */}
+      <header className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.06] bg-game-panel/60 backdrop-blur-sm shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => setPage('home')}
-            className="flex items-center gap-1.5 text-game-muted hover:text-game-text transition-colors text-sm"
+            className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg text-game-muted hover:text-game-text hover:bg-white/[0.04] transition-colors shrink-0"
           >
             ← 返回
           </button>
-          <span className="text-white/[0.15]">|</span>
-          <h1 className="font-semibold text-game-text">{world.name}</h1>
+          <div className="h-4 w-px bg-white/[0.08] shrink-0" />
+          <h1 className="text-sm font-semibold text-game-text truncate">{world.name}</h1>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-2 shrink-0">
           {settings.imageProvider !== 'none' && (
-            <button
-              onClick={handleManualImageGen}
-              disabled={store.isGeneratingImage}
-              className="px-3 py-1.5 text-xs rounded-lg border border-white/[0.08] text-game-muted hover:border-indigo-400/40 hover:text-indigo-300 transition-all duration-200 disabled:opacity-40"
-            >
-              🎲 生成場景
-            </button>
+            <>
+              <button
+                onClick={handleManualImageGen}
+                disabled={store.isGeneratingImage}
+                className="px-2.5 py-1.5 text-xs rounded-lg border border-white/[0.08] text-game-muted hover:text-indigo-400 hover:border-indigo-500/40 hover:bg-indigo-500/[0.06] transition-all disabled:opacity-40"
+                title="生成場景插畫"
+              >
+                🎲 生成插畫
+              </button>
+              <button
+                onClick={() => {
+                  const panel = document.querySelector('[data-right-panel]');
+                  if (panel) panel.classList.toggle('hidden');
+                  const handle = document.querySelector('[data-resize-handle]');
+                  if (handle) handle.classList.toggle('hidden');
+                }}
+                className="px-2.5 py-1.5 text-xs rounded-lg border border-white/[0.08] text-game-muted hover:text-game-text hover:border-white/[0.15] transition-all"
+                title="顯示/隱藏場景面板"
+              >
+                🖼 隱藏
+              </button>
+            </>
           )}
           <button
             onClick={() => setPage('story-log')}
-            className="px-3 py-1.5 text-xs rounded-lg border border-white/[0.08] text-game-muted hover:border-indigo-400/40 hover:text-indigo-300 transition-all duration-200"
+            className="px-2.5 py-1.5 text-xs rounded-lg border border-white/[0.08] text-game-muted hover:text-game-text hover:border-white/[0.15] transition-all"
           >
-            📖 故事日誌
-          </button>
-          <button
-            onClick={() => setPage('settings')}
-            className="px-3 py-1.5 text-xs rounded-lg border border-white/[0.08] text-game-muted hover:border-indigo-400/40 hover:text-indigo-300 transition-all duration-200"
-          >
-            設定
+            📜 故事記錄
           </button>
         </div>
       </header>
 
+      {/* Main Content Area */}
       <div className="flex-1 flex min-h-0">
-        {/* Left: Chat Area */}
+        {/* Left: Chat Panel */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Pending character confirmations */}
+          {/* New character requests */}
           {pendingChars.length > 0 && (
-            <div className="px-4 py-3 bg-indigo-500/10 border-b border-indigo-500/20">
-              <p className="text-sm font-medium text-indigo-300 mb-2">AI 建議新增角色：</p>
-              <div className="space-y-2">
+            <div className="px-4 py-3 border-b border-indigo-500/20 bg-indigo-500/[0.04] shrink-0">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm">✨</span>
+                <span className="text-xs font-medium text-indigo-400">AI 建議新增角色</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
                 {pendingChars.map((char, i) => (
-                  <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg bg-indigo-500/5 border border-indigo-500/15">
-                    <span className="text-sm text-game-text">
-                      {char.name} ({char.gender}, {char.age}歲)
+                  <div
+                    key={i}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08]"
+                  >
+                    <span className="text-xs text-game-text font-medium">{char.name}</span>
+                    <span className="text-xs text-game-muted">
+                      {char.gender} · {char.age}歲
                     </span>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleConfirmNewCharacter(char, i)}
-                        className="px-3 py-1 text-xs rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 transition-colors"
-                      >
-                        確認新增
-                      </button>
-                      <button
-                        onClick={() => handleSkipNewCharacter(i)}
-                        className="px-3 py-1 text-xs rounded-lg text-game-muted hover:text-game-text transition-colors"
-                      >
-                        跳過
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => handleConfirmNewCharacter(char, i)}
+                      className="px-2 py-0.5 text-xs rounded-md bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 transition-colors"
+                    >
+                      確認
+                    </button>
+                    <button
+                      onClick={() => handleSkipNewCharacter(i)}
+                      className="px-2 py-0.5 text-xs rounded-md bg-white/[0.04] text-game-muted hover:text-game-text transition-colors"
+                    >
+                      跳過
+                    </button>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Chat messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-4">
-            <div className="max-w-2xl mx-auto space-y-3">
+          {/* Chat Messages */}
+          <div className="flex-1 overflow-y-auto px-4 py-4 scroll-smooth">
+            <div className="space-y-4">
+              {store.entries.length === 0 && (
+                <div className="text-center py-16">
+                  <div className="text-5xl mb-4 opacity-20">📖</div>
+                  <p className="text-game-muted text-sm">
+                    開始你的故事吧，輸入你的行動或對話...
+                  </p>
+                </div>
+              )}
+
               {store.entries.map((entry) => (
                 <ChatBubble
                   key={entry.id}
@@ -259,14 +284,14 @@ export default function GamePage() {
 
               {/* Processing indicator */}
               {store.isProcessing && (
-                <div className="flex justify-start chat-bubble-enter">
-                  <div className="flex gap-3 max-w-[70%]">
-                    <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center">
-                      <span className="generating-pulse text-sm">✦</span>
+                <div className="flex justify-center py-3">
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.06]">
+                    <div className="flex gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-500/60 generating-pulse" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-500/60 generating-pulse" style={{ animationDelay: '0.2s' }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-500/60 generating-pulse" style={{ animationDelay: '0.4s' }} />
                     </div>
-                    <div className="px-4 py-3 rounded-2xl rounded-tl-sm bg-game-panel/80 border border-white/[0.06] text-sm text-game-muted">
-                      AI 回應中...
-                    </div>
+                    <span className="text-xs text-game-muted">AI 生成中...</span>
                   </div>
                 </div>
               )}
@@ -276,24 +301,23 @@ export default function GamePage() {
           </div>
 
           {/* Input Area */}
-          <div className="border-t border-white/[0.06] p-4 shrink-0">
-            <div className="max-w-2xl mx-auto flex items-center gap-3">
-              <input
+          <div className="px-4 py-3 border-t border-white/[0.06] bg-game-panel/50 backdrop-blur-sm shrink-0">
+            <div className="flex gap-2 items-end">
+              <textarea
                 ref={inputRef}
-                type="text"
+                rows={1}
                 value={playerInput}
-                onChange={(e) => setPlayerInput(e.target.value)}
-                onKeyDown={handleKeyDown}
+                onChange={(e) => { setPlayerInput(e.target.value); const ta = e.target; ta.style.height = "auto"; ta.style.height = ta.scrollHeight + "px"; }}
+                onKeyDown={(e) => { const ta = e.target as HTMLTextAreaElement; ta.style.height = "auto"; ta.style.height = ta.scrollHeight + "px"; handleKeyDown(e); }}
                 disabled={store.isProcessing}
-                placeholder={
-                  store.isProcessing ? 'AI 回應中...' : `輸入 ${player?.name ?? '你'} 的動作或對話...`
-                }
-                className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-game-text placeholder-game-muted/50 focus:border-indigo-400/50 outline-none disabled:opacity-40 transition-all duration-200"
-              />
+                placeholder="輸入你的行動或對話... (Enter 發送, Shift+Enter 換行)"
+                className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-game-text placeholder-game-muted/40 focus:border-indigo-500/40 focus:bg-white/[0.06] outline-none transition-all duration-200 disabled:opacity-50 resize-none min-h-[42px] max-h-[200px]"
+              </textarea>
+              
               <button
                 onClick={handleSend}
-                disabled={store.isProcessing || !playerInput.trim()}
-                className="btn-primary px-6 py-3 rounded-xl font-medium text-sm text-white disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none shadow-lg shadow-indigo-500/25"
+                disabled={!playerInput.trim() || store.isProcessing}
+                className="px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed btn-primary"
               >
                 發送
               </button>
@@ -301,10 +325,44 @@ export default function GamePage() {
           </div>
         </div>
 
+        {/* Resize Handle */}
+        {settings.imageProvider !== 'none' && (
+          <div
+            data-resize-handle
+            className="w-1.5 cursor-col-resize hover:bg-indigo-500/30 active:bg-indigo-500/50 transition-colors shrink-0 group relative"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              const handle = e.currentTarget;
+              const rightPanel = handle.nextElementSibling;
+              if (!rightPanel) return;
+              const startX = e.clientX;
+              const startWidth = rightPanel.offsetWidth;
+              const onMove = (ev) => {
+                const delta = startX - ev.clientX;
+                const newWidth = Math.min(600, Math.max(240, startWidth + delta));
+                rightPanel.style.width = newWidth + 'px';
+              };
+              const onUp = () => {
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+                document.body.style.cursor = '';
+              };
+              document.addEventListener('mousemove', onMove);
+              document.addEventListener('mouseup', onUp);
+              document.body.style.cursor = 'col-resize';
+            }}
+          >
+            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-white/[0.06] group-hover:bg-indigo-500/30" />
+          </div>
+        )}
+
         {/* Right: Scene Panel */}
         {settings.imageProvider !== 'none' && (
-          <div className="w-80 shrink-0 border-l border-white/[0.06] bg-game-panel/30 flex flex-col">
-            <div className="flex-1 flex items-center justify-center p-6">
+          <div
+            data-right-panel
+            className="w-80 shrink-0 border-l border-white/[0.06] bg-game-panel/30 flex flex-col"
+          >
+            <div className="flex-1 flex items-center justify-center p-6 overflow-hidden">
               {store.isGeneratingImage ? (
                 <div className="text-center text-game-muted">
                   <div className="text-5xl mb-4 generating-pulse">🎨</div>
@@ -317,7 +375,7 @@ export default function GamePage() {
                   className="max-w-full max-h-full rounded-2xl scene-image-enter object-contain shadow-2xl"
                 />
               ) : (
-                <div className="text-center text-game-muted/40">
+                <div className="text-center text-game-muted/30">
                   <p className="text-5xl mb-4">🖼️</p>
                   <p className="text-sm">尚無場景插畫</p>
                   <p className="text-xs mt-1">點擊上方 🎲 生成</p>
@@ -351,6 +409,7 @@ export default function GamePage() {
       </div>
     </div>
   )
+
 }
 
 function ChatBubble({
@@ -393,7 +452,7 @@ function ChatBubble({
         <div
           className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 shadow-lg ${
             isPlayer
-              ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-indigo-500/25'
+              ? 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-indigo-500/25'
               : 'bg-game-panel text-game-muted ring-1 ring-white/[0.08]'
           }`}
         >
@@ -410,7 +469,7 @@ function ChatBubble({
           <div
             className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
               isPlayer
-                ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-tr-md shadow-lg shadow-indigo-500/20'
+                ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-stone-900 rounded-tr-md shadow-lg shadow-indigo-500/20'
                 : 'bg-game-panel/80 text-game-text rounded-tl-md border border-white/[0.06]'
             }`}
           >

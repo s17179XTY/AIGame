@@ -21,7 +21,7 @@ export default function App() {
     return (
       <div className="h-screen flex items-center justify-center bg-game-bg">
         <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xl shadow-lg shadow-indigo-500/20">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-xl shadow-lg shadow-indigo-500/20">
             <span className="generating-pulse">✦</span>
           </div>
           <p className="text-game-muted text-base">載入中...</p>

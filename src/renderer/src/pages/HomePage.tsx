@@ -27,7 +27,7 @@ export default function HomePage() {
       {/* Header */}
       <header className="flex items-center justify-between px-8 py-5 border-b border-white/[0.06]">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-lg shadow-lg shadow-indigo-500/20">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-lg shadow-lg shadow-indigo-500/20">
             ✦
           </div>
           <h1 className="text-xl font-bold">
@@ -36,7 +36,7 @@ export default function HomePage() {
         </div>
         <button
           onClick={() => setPage('settings')}
-          className="px-4 py-2 text-sm rounded-xl border border-white/[0.08] text-game-muted hover:border-indigo-400/40 hover:text-indigo-300 hover:bg-white/[0.03] transition-all duration-200"
+          className="px-4 py-2 text-sm rounded-xl border border-white/[0.08] text-game-muted hover:border-indigo-500/40 hover:text-indigo-300 hover:bg-white/[0.03] transition-all duration-200"
         >
           設定
         </button>
@@ -69,7 +69,7 @@ export default function HomePage() {
               {worlds.map((world) => (
                 <div
                   key={world.id}
-                  className="group flex items-center justify-between p-5 rounded-2xl bg-game-panel/60 border border-white/[0.06] hover:border-indigo-400/30 hover:bg-game-panel/90 transition-all duration-200 cursor-pointer backdrop-blur-sm"
+                  className="group flex items-center justify-between p-5 rounded-2xl bg-game-panel/60 border border-white/[0.06] hover:border-indigo-500/30 hover:bg-game-panel/90 transition-all duration-200 cursor-pointer backdrop-blur-sm"
                   onClick={() => handleEnterWorld(world)}
                 >
                   <div className="flex items-center gap-4 flex-1 min-w-0">
