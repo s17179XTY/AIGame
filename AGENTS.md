@@ -1,335 +1,569 @@
 # AI Novel Game — AGENTS.md（AI 開發指南）
 
+> 最後更新：2026-05-14 | 版本：1.0.0
+
 ## 專案概述
 
 AI Novel Game 是一款 Electron 桌面應用，提供 AI 驅動的互動敘事遊戲。使用者建立自訂的虛構世界，透過文字輸入與 AI 互動，體驗由 LLM 生成的劇情、對話、角色演變與世界變化。
 
 - **類型**：獨立 Electron 桌面應用
-- **語言**：TypeScript（全端）
-- **UI 語言**：程式碼使用英文，遊戲內容使用繁體中文
-- **目前版本**：1.0.0
+- **語言**：TypeScript（全端），UI 程式碼英文，遊戲內容繁體中文
+- **版本**：1.0.0
+- **授權**：ISC
 - **GitHub**：https://github.com/s17179XTY/AIGame
+- **入口**：`out/main/index.js`（Electron main），`out/renderer/index.html`（renderer）
 
 ---
 
 ## 技術棧
 
-| 層 | 技術 | 用途 |
-|---|------|------|
-| 桌面框架 | Electron 33 | 視窗管理、系統整合 |
-| 建置工具 | electron-vite 5 + Vite 5 | 三目標打包（main / preload / renderer） |
-| 前端 | React 18 + TypeScript | UI 渲染 |
-| 樣式 | Tailwind CSS 3 | 暗色遊戲主題 UI，自訂 `game-*` 色系 |
-| 狀態管理 | Zustand 5 | 前端全域狀態 |
-| 資料庫 | better-sqlite3 12 | 本地 SQLite，WAL 模式，儲存於 `userData/aigame.db` |
-| LLM SDK | openai / @anthropic-ai/sdk / @google/generative-ai | 多 provider AI 整合 |
-| 原生重編譯 | @electron/rebuild 4 | 為 Electron 的 Node 版本重編譯 better-sqlite3 |
-| 打包 | electron-builder 26 | Windows NSIS 安裝程式 |
+| 層 | 技術 | 版本 | 用途 |
+|---|------|------|------|
+| 桌面框架 | Electron | ^33.4.0 | 視窗管理、系統整合 |
+| 建置工具 | electron-vite | ^5.0.0 | 三目標打包（main / preload / renderer） |
+| 打包器 | Vite | ^5.4.21 | 捆綁與 HMR |
+| 前端 | React | ^18.3.1 | UI 渲染（StrictMode） |
+| 樣式 | Tailwind CSS | ^3.4.19 | 暗色遊戲主題，自訂 `game-*` 色系 |
+| 狀態管理 | Zustand | ^5.0.13 | 前端全域狀態（3 stores） |
+| 資料庫 | better-sqlite3 | ^12.10.0 | 本地 SQLite，WAL 模式 |
+| LLM SDK | openai | ^6.37.0 | OpenAI 相容 API（GPT-4o、JSON mode） |
+| LLM SDK | @anthropic-ai/sdk | ^0.95.2 | Anthropic 相容 API（Claude） |
+| LLM SDK | @google/generative-ai | ^0.24.1 | Google Gemini API |
+| 原生重編譯 | @electron/rebuild | ^4.0.4 | 為 Electron Node 版本重編譯 better-sqlite3 |
+| 打包 | electron-builder | ^26.8.1 | Windows NSIS 安裝程式 |
 
-### 關鍵依賴版本
+### ⚠️ 版本鎖定說明
 
-```json
-{
-  "electron": "^33.4.0",          // ⚠️ 鎖定 33，electron-vite 5 不相容 Electron 42+
-  "electron-vite": "^5.0.0",       // 鎖定 v5，peer dep 限制 Vite 5.x
-  "vite": "^5.4.21",               // 不可升級到 6+
-  "@vitejs/plugin-react": "^4.7.0",// 必須 v4，v5 不相容
-  "typescript": "^6.0.3",          // 使用 TS 6，baseUrl 已棄用
-  "react": "^18.3.1",
-  "zustand": "^5.0.13",
-  "better-sqlite3": "^12.10.0",
-  "openai": "^6.37.0",
-  "@anthropic-ai/sdk": "^0.95.2",
-  "@google/generative-ai": "^0.24.1"
-}
-```
+- **Electron 鎖定 33**：electron-vite 5 不相容 Electron 42+，升級前必須驗證
+- **Vite 鎖定 5.x**：electron-vite 5 peer dependency，不可升 6
+- **@vitejs/plugin-react 鎖定 v4**：v5 不相容
+- **TypeScript 6**：`baseUrl` 已棄用（目前有警告但無功能影響），需改用 `paths`
 
 ---
 
-## 專案結構
+## 目錄結構（完整）
 
 ```
 AIGame/
   package.json                  # Scripts: dev / build / preview / package / postinstall
-  electron.vite.config.ts       # 三目標 electron-vite 設定
-  tsconfig.json / .node / .web   # TypeScript 設定（project references）
-  tailwind.config.js            # 自訂 game-* 色系、動畫
-  postcss.config.js
-  electron-builder.yml          # Windows NSIS 打包設定
+  electron.vite.config.ts       # 三目標設定（main / preload / renderer），externalizeDepsPlugin
+  tsconfig.json                 # 根設定，references node + web
+  tsconfig.node.json            # main + preload 的 TS 設定（composite, bundler resolution）
+  tsconfig.web.json             # renderer 的 TS 設定（react-jsx, paths: @/ → src/renderer/src/）
+  tailwind.config.js            # game-* 色系、4 組動畫（fadeIn/slideUp/pulseSoft/glow）
+  postcss.config.js             # Tailwind + autoprefixer
+  electron-builder.yml          # Windows NSIS，appId: com.aigame.novel
+  .gitignore                    # node_modules, out, dist, *.db, userData, .env
+  LICENSE
+  README.md
+  AGENTS.md                     # 本檔案
+  dev-error.log                 # 開發錯誤日誌（空）
+
   src/
-    main/                       # 主進程
-      index.ts                  # BrowserWindow 建立、生命週期
-      database.ts               # SQLite 初始化、5 張表的 schema migration
-      ipc-handlers.ts           # 所有 ipcMain.handle 註冊
+    main/                       # ── 主進程 ──
+      index.ts                  # BrowserWindow（1400x900, min 1024x700, 背景 #1a1a2e）
+      database.ts               # SQLite 初始化、5 張表 schema、WAL、foreign keys
+      ipc-handlers.ts           # 所有 ipcMain.handle 註冊（16 個通道）
       services/
-        types.ts                # ⭐ 所有型別定義（專案的型別唯一來源）
-        world.ts                # World CRUD + WorldState 管理
-        character.ts            # Character CRUD + visual anchors
-        game.ts                 # 遊戲引擎（Prompt 組裝 → LLM → 解析 → 狀態更新）
-        settings.ts             # 設定讀寫 + testLLMConnection()
-        llm/                    # LLMProvider 介面 + 3 個實作 + createLLMProvider 工廠
-          index.ts              # LLMProvider 介面 + createLLMProvider()
-          openai.ts             # OpenAI 相容（GPT-4o、JSON mode、baseUrl 支援）
-          anthropic.ts          # Anthropic 相容（Claude、baseUrl 支援）
-          gemini.ts             # Google Gemini
-        image/                  # ImageProvider 介面 + DALL-E + Stability AI
+        types.ts                # ⭐ 所有型別、介面、常數（專案的型別唯一來源）
+        world.ts                # World CRUD + WorldState 管理（含 rowToWorld/rowToWorldState）
+        character.ts            # Character CRUD + visual anchors + getPlayerCharacter
+        game.ts                 # 遊戲引擎：processGameAction + buildPrompt + parseLLMOutput
+        settings.ts             # getSettings / updateSettings / testLLMConnection
+        llm/                    # LLM Provider 層
+          index.ts              # LLMProvider 介面 + createLLMProvider 工廠函數
+          openai.ts             # OpenAI 相容（含 response_format: json_object 支援）
+          anthropic.ts          # Anthropic 相容（system/user 分離處理）
+          gemini.ts             # Google Gemini（startChat + history + baseUrl）
+        image/                  # 圖片 Provider 層
           index.ts              # ImageProvider 介面
-          openai.ts             # DALL-E 3（下載圖片，不支援 seed）
-          stability.ts          # Stability AI（v2beta，支援 seed）
+          openai.ts             # DALL-E 3（https 下載圖片，不支援 seed）
+          stability.ts          # Stability AI v2beta（FormData + fetch + base64 解碼）
     preload/
-      index.ts                  # contextBridge: window.api.*
+      index.ts                  # contextBridge.exposeInMainWorld('api', {...})，6 個分類
     renderer/
-      index.html                # 入口 HTML
+      index.html                # lang=zh-TW，Google Fonts Inter preconnect，<div id="root">
       src/
-        main.tsx                # ReactDOM.createRoot
-        App.tsx                 # 簡單頁面切換（無 router），首次載入時 loadSettings()
-        env.d.ts                # window.api 型別宣告
-        index.css               # Tailwind 指令 + 全域樣式 + 動畫 + glass-panel/gradient-text/btn-primary 工具類
+        main.tsx                # ReactDOM.createRoot + StrictMode
+        App.tsx                 # 簡單 switch-case 頁面路由，首次載入 loadSettings()
+        env.d.ts                # declare global Window.api: ElectronAPI
+        index.css               # Tailwind 指令 + 全域樣式 + 捲軸 + 動畫 + glass-panel 工具類
         stores/
-          appStore.ts           # currentPage, selectedWorldId（路由狀態）
-          settingsStore.ts      # 從主進程載入/更新設定
-          gameStore.ts          # StoryEntry 清單、WorldState、圖片狀態
+          appStore.ts           # currentPage（union type 7 種） + selectedWorldId
+          settingsStore.ts      # settings + loaded + loadSettings/updateSettings
+          gameStore.ts          # entries[] + worldState + isProcessing + images state
         pages/
-          HomePage.tsx          # 世界列表、進入/刪除
-          SettingsPage.tsx      # API 設定、測試連線、圖片偏好（英文 UI）
-          WorldCreatePage.tsx   # 世界 + 玩家 + NPC 建立表單
-          WorldPreviewPage.tsx  # AI 預覽（v1 為 placeholder）
-          GamePage.tsx          # 核心遊戲：左側聊天 + 右側場景插畫
-          StoryLogPage.tsx      # 時間線故事日誌
-    out/                        # 建置輸出（gitignored）
+          HomePage.tsx          # 世界列表（卡片式）、進入/刪除（confirm 對話框）
+          SettingsPage.tsx      # LLM 設定 + 圖片設定 + 測試連線（英文 UI 避免編碼問題）
+          WorldCreatePage.tsx   # 世界設定 + 玩家角色 + 重要 NPC 表單（CharacterForm 元件）
+          WorldPreviewPage.tsx  # 完全為 placeholder：提示「此功能將在後續版本中完善」+ 略過按鈕
+          GamePage.tsx          # 核心遊戲：左 70% 聊天區 + 右 30% 場景插畫面板
+          StoryLogPage.tsx      # 時間線故事日誌（垂直時間線 + 彩色圓點標記類型）
+  out/                          # 建置輸出（gitignored）
 ```
 
 ---
 
-## 架構：Electron 三層模型
+## 架構詳解
+
+### Electron 三層模型
 
 ```
-Renderer (React)
-  Pages:  HomePage, SettingsPage, WorldCreatePage, GamePage, StoryLogPage
-  Stores: appStore（路由）、settingsStore、gameStore
-  |
-  |  window.api.*  (contextBridge)
-  |
-Preload
-  src/preload/index.ts
-    暴露: api.world.* / api.character.* / api.game.* / api.image.* / api.settings.* / api.story.*
-  |
-  |  ipcMain.handle(...)
-  |
-Main Process
-  index.ts       - BrowserWindow（1400x900, min 1024x700）
-  database.ts    - SQLite（5 tables, WAL, foreign keys）
-  ipc-handlers.ts - 所有 IPC 路由註冊
-  services/      - 業務邏輯
+┌─────────────────────────────────────────────────────┐
+│ Renderer (React 18, 瀏覽器環境)                       │
+│                                                       │
+│  App.tsx → switch(currentPage) → 6 個 Page 元件       │
+│  Stores: appStore / settingsStore / gameStore         │
+│  樣式: Tailwind CSS (game-* 色系) + 自訂動畫            │
+│  字型: Inter (Google Fonts) + 系統中文字型               │
+│                                                       │
+│  ═══ contextBridge (window.api.*) ═══                │
+│                                                       │
+├─────────────────────────────────────────────────────┤
+│ Preload (Node.js 環境，有限 API)                       │
+│                                                       │
+│  src/preload/index.ts                                 │
+│  6 個分類: world / character / game / image /          │
+│            settings / story                           │
+│  每個方法呼叫 ipcRenderer.invoke(channel, ...args)     │
+│                                                       │
+│  ═══ ipcMain.handle ═══                              │
+│                                                       │
+├─────────────────────────────────────────────────────┤
+│ Main Process (Node.js 完整環境)                        │
+│                                                       │
+│  index.ts: BrowserWindow 生命週期                      │
+│  ipc-handlers.ts: 16 個 IPC 路由                       │
+│  services/: 所有業務邏輯                                │
+│  database.ts: better-sqlite3 (WAL, FK)                │
+│                                                       │
+│  安全: contextIsolation: true                          │
+│        nodeIntegration: false                          │
+│        sandbox: false                                  │
+└─────────────────────────────────────────────────────┘
 ```
 
-**安全設定**：`contextIsolation: true`, `nodeIntegration: false`, `sandbox: false`。Renderer 只能透過 preload IPC 通訊。API keys 以純文字儲存在 SQLite `settings` 表中。
+### 前端路由機制
+
+不使用 React Router，而是透過 Zustand `appStore.currentPage` 做簡單切換：
+
+```typescript
+currentPage: 'home' | 'world-create' | 'world-edit' | 'world-preview' | 'game' | 'settings' | 'story-log'
+```
+
+App.tsx 首次載入時呼叫 `loadSettings()`，顯示 loading spinner，載入完成後根據 `currentPage` 渲染對應頁面。
+
+### 前端狀態管理（3 Stores）
+
+| Store | 關鍵狀態 | 方法 |
+|-------|---------|------|
+| `appStore` | `currentPage`, `selectedWorldId` | `setPage()`, `selectWorld()` |
+| `settingsStore` | `settings: AppSettings`, `loaded` | `loadSettings()`, `updateSettings()` |
+| `gameStore` | `entries[]`, `worldState`, `isProcessing`, `currentImagePath`, `isGeneratingImage`, `pendingNewCharacters[]` | `addEntry()`, `addEntries()`, `setWorldState()`, `clear()` 等 |
 
 ---
 
 ## 資料庫 Schema
 
-所有表儲存在 `userData/aigame.db`，WAL 模式，啟用 foreign keys。JSON 欄位手動序列化/反序列化（未使用 SQLite JSON extension）。
+資料庫：`userData/aigame.db`（better-sqlite3, WAL 模式, foreign keys 啟用）
 
-| 表 | 用途 | 關鍵欄位 |
+### 表結構
+
+| 表 | 用途 | 欄位 |
 |---|------|------|
-| `worlds` | 世界定義 | id, name, config(JSON) |
-| `characters` | 角色 | world_id(FK), is_player, is_dynamic, is_locked, visual_anchor(JSON) |
-| `world_state` | 即時世界狀態 | world_id(UNIQUE FK), scene, time, weather, character_emotions(JSON), relationships(JSON), recent_events(JSON) |
-| `story_log` | 故事條目 | world_id(FK), sequence, speaker_id(FK), type, emotion, image_trigger_context(JSON) |
-| `settings` | 應用設定 | key(PRIMARY), value |
+| `worlds` | 世界定義 | `id TEXT PK`, `name`, `config TEXT`(JSON), `created_at`, `updated_at` |
+| `characters` | 角色 | `id TEXT PK`, `world_id FK`, `name`, `gender`, `age INT`, `appearance`, `personality`, `extra_prompt`, `is_player INT`, `is_dynamic INT`, `is_locked INT`, `visual_anchor TEXT`(JSON), `created_at` |
+| `world_state` | 即時世界狀態 | `id TEXT PK`, `world_id UNIQUE FK`, `scene`, `time`, `weather`, `character_emotions TEXT`(JSON), `relationships TEXT`(JSON), `recent_events TEXT`(JSON), `last_image_context TEXT`(JSON), `updated_at` |
+| `story_log` | 故事條目 | `id TEXT PK`, `world_id FK`, `sequence INT`, `speaker_id FK`, `speaker_name`, `content`, `type`, `emotion`, `image_trigger_context TEXT`(JSON), `image_path`, `created_at` |
+| `settings` | 應用設定 | `key TEXT PK`, `value TEXT` |
 
----
+### 索引
 
-## 核心概念
-
-### AppSettings（設定模型）
-
-```typescript
-interface AppSettings {
-  llmProvider: 'openai' | 'anthropic' | 'gemini'
-  llmModel: string
-  apiKey: string           // 所有 LLM provider 共用
-  apiBaseUrl: string        // 可選自訂端點（LM Studio 等需包含 /v1）
-  imageProvider: 'openai' | 'stability' | 'none'
-  imageModel: string
-  stabilityApiKey: string   // Stability AI 獨立 key
-  imageFrequency: 'conservative' | 'standard' | 'rich'
-}
+```sql
+CREATE INDEX idx_characters_world ON characters(world_id);
+CREATE INDEX idx_story_log_world ON story_log(world_id);
+CREATE INDEX idx_story_log_sequence ON story_log(world_id, sequence);
 ```
 
-### LLM Provider 工廠
+### 注意事項
 
-`src/main/services/llm/index.ts` 的 `createLLMProvider(settings)` 根據 `llmProvider` 建立對應實例。OpenAI 和 Anthropic 支援自訂 baseUrl（適用於 LM Studio、Ollama 等本地/代理服務）。Gemini 也支援 baseUrl。
-
-### Game Engine 流程（processGameAction）
-
-1. **Prompt 組裝**：世界設定 + 世界狀態（場景/時間/天氣/情緒/關係/事件）+ 最近 10 條故事 + 玩家輸入
-2. **LLM 呼叫**：透過 `createLLMProvider(settings)`，請求 JSON 格式輸出
-   - 偵測本地模型（localhost/127.0.0.1/192.168.）時跳過 `response_format: json_object`
-   - 若因 `response_format` 報錯，自動降級重試（不加 json_object）
-3. **回應解析 (parseLLMOutput)**：三層策略
-   - Strategy 1：從文字中找 `{...}` 邊界提取 JSON
-   - Strategy 2：移除 markdown code block
-   - Fallback：整個回應當作 narration 顯示
-4. **狀態更新**：合併情緒變化、關係更新、新事件到 world_state
-5. **圖片觸發評估**：依 frequency 偏好過濾（conservative/standard/rich）
-6. **故事記錄**：所有 narration 和 dialogues 寫入 story_log
-
-### 圖片系統
-
-- **三級觸發**：scene（場景變化）> behavior（重要行為）> none（純對話）
-- **頻率偏好**：conservative（僅場景）/ standard（場景 + 重要行為）/ rich（更多觸發）
-- **非同步管線**：文字立即顯示，右側面板顯示生成中佔位，圖片完成後淡入
-- **手動觸發**：點擊相機按鈕或訊息旁的圖示
-- **Visual Anchors**：儲存 seed、prompt 模板、最後圖片路徑以維持角色一致性
-- **注意**：DALL-E 3 不支援 seed（僅 DALL-E 2 支援）
-
-### 測試連線（testLLMConnection）
-
-位於 `src/main/services/settings.ts`。使用動態 `import()` 按需載入 SDK。以最小請求測試連線（max_tokens: 5, 訊息: "Hi"）。**必須驗證回應內容**（檢查 `choices[0].message.content` 存在），因為 LM Studio 等本地伺服器即使端點錯誤也可能回傳 200。
+- JSON 欄位手動 `JSON.stringify` / `JSON.parse`（未使用 SQLite JSON extension）
+- world_state 與 worlds 是一對一關係（`world_id UNIQUE`）
+- 刪除 world 時，characters、world_state、story_log 由 `ON DELETE CASCADE` 自動刪除
+- 刪除 character 時，story_log 的 `speaker_id` 設為 NULL（`ON DELETE SET NULL`）
 
 ---
 
-## IPC 通道對照表
+## 核心型別體系
 
-所有通道常數定義在 `types.ts` 的 `IPC_CHANNELS`。
+> 所有型別定義在 `src/main/services/types.ts`，約 250 行。以下是架構概覽。
 
-| 分類 | 通道 | Preload 方法 |
-|------|------|------|
-| World | `world:create` | `api.world.create(config)` |
-| World | `world:list` | `api.world.list()` |
-| World | `world:get` | `api.world.get(id)` |
-| World | `world:update` | `api.world.update(id, updates)` |
-| World | `world:delete` | `api.world.delete(id)` |
-| World | `world:state:get` | `api.world.getState(worldId)` |
-| Character | `character:create` | `api.character.create(worldId, config, isPlayer?, isDynamic?)` |
-| Character | `character:list` | `api.character.list(worldId)` |
-| Character | `character:update` | `api.character.update(id, updates)` |
-| Character | `character:delete` | `api.character.delete(id)` |
-| Character | `character:generate-avatar` | `api.character.generateAvatar(id)` |
-| Game | `game:action` | `api.game.sendAction(action)` |
-| Image | `image:generate-scene` | `api.image.generateScene(prompt)` |
-| Settings | `settings:test-llm` | `api.settings.testLLM(provider, key, model, url?)` |
-| Settings | `settings:get` | `api.settings.get()` |
-| Settings | `settings:update` | `api.settings.update(updates)` |
-| Story | `story:get-log` | `api.story.getLog(worldId, limit?, offset?)` |
-| Story | `story:get-snapshot` | `api.story.getSnapshot(worldId)` |
+### 世界層
+- `WorldConfig` → `World`（含 id, timestamps）
+- `WorldState`：scene, time, weather, characterEmotions, relationships, recentEvents, lastImageContext
+- `Relationship`：characterA, characterB, relation, description
+
+### 角色層
+- `CharacterConfig` → `Character`（含 isPlayer, isDynamic, isLocked, visualAnchor）
+- `VisualAnchor`：provider, seed, promptTemplate, lastImagePath
+
+### LLM 層
+- `LLMProviderType`：`'openai' | 'anthropic' | 'gemini'`
+- `LLMMessage`：`{ role: 'system'|'user'|'assistant', content }`
+- `LLMOptions`：model, temperature?, maxTokens?, responseFormat?
+- `LLMResponse`：text, usage?（promptTokens, completionTokens）
+- `StructuredLLMOutput`：narration, dialogues[], stateUpdate, imageTrigger?, newCharacters?[]
+- `DialogueEntry`：speakerId, speakerName, type(`'dialogue'|'monologue'|'action'`), content, emotion
+- `StateUpdate`：sceneChanged, newScene?, timeAdvanced, weatherChanged, newWeather?, emotionUpdates{}, relationshipUpdates[], newEvents[]
+- `ImageTrigger`：shouldGenerate, level(`'scene'|'behavior'|'none'`), sceneDescription, charactersPresent[], keyAction
+- `NewCharacterRequest`：name, gender, age, appearance, personality, role, relationToExisting
+
+### 圖片層
+- `ImageProviderType`：`'openai' | 'stability'`
+- `ImageOptions`：size?, style?, seed?, quality?
+- `ImageResult`：imagePath, seed?, revisedPrompt?
+- `ImageContext`：sceneDescription, charactersPresent[], weather, time, keyAction
+
+### 遊戲層
+- `GameAction`：{ worldId, playerInput, requestImageGeneration? }
+- `GameResponse`：{ entries[], narration, stateUpdate, imageTrigger?, newCharacterRequests?[] }
+- `StoryEntry`：id, worldId, sequence, speakerId|null, speakerName, content, type, emotion, imageTriggerContext|null, imagePath|null, createdAt
+
+### 設定層
+- `AppSettings`：llmProvider, llmModel, apiKey, apiBaseUrl, imageProvider, imageModel, stabilityApiKey, imageFrequency
+- `DEFAULT_SETTINGS`：openai / gpt-4o / 空 key / 空 baseUrl / none / dall-e-3 / 空 / standard
+
+### IPC 通道常數
+
+`IPC_CHANNELS` 物件包含 16 個通道常數，命名規則 `domain:action`：
+- World: `world:create/get/list/update/delete`, `world:state:get`, `world:preview:generate`
+- Character: `character:create/get/list/update/delete`, `character:generate-avatar`
+- Game: `game:action`, `game:new-character-confirm`
+- Image: `image:generate-scene`, `image:check-status`
+- Settings: `settings:get/test-llm/update`
+- Story: `story:get-log`, `story:get-snapshot`
 
 ---
 
-## 開發指令
+## 遊戲引擎流程（processGameAction 完整步驟）
 
-```powershell
-npm install        # 安裝依賴 + 自動重編譯 better-sqlite3（postinstall）
-npm run dev        # 開發模式，HMR
-npm run build      # 僅生產建置
-npm run package    # 打包 Windows 安裝程式
+```
+玩家輸入 → GamePage.tsx handleSend()
+  │
+  ▼
+window.api.game.sendAction({ worldId, playerInput })
+  │
+  ▼
+processGameAction(action: GameAction) → game.ts
+  │
+  ├─ 1. 載入資料
+  │     getWorld(worldId) / getWorldState(worldId) / listCharacters / getPlayerCharacter
+  │
+  ├─ 2. 組裝 Prompt（buildPrompt）
+  │     system prompt: 世界設定 + 場景/時間/天氣 + 角色列表 + 情緒 + 關係 + 近期事件
+  │                   + JSON 格式規範（含範例 schema）
+  │     context:     最近 10 條 story_log（反序查詢後再反轉）
+  │     user message: 「玩家 {name} 的動作/對話: {playerInput}」
+  │
+  ├─ 3. LLM 呼叫
+  │     isLocalModel 偵測：apiBaseUrl 含 localhost/127.0.0.1/192.168. → 跳過 json_object
+  │     若因 response_format 報錯 → 自動降級重試（不加 json_object）
+  │
+  ├─ 4. 解析回應（parseLLMOutput）
+  │     Strategy 1: 搜尋 { ... } 邊界提取 JSON
+  │     Strategy 2: 移除 markdown code block（```json...```）
+  │     Fallback: 整個回應當 narration 顯示
+  │
+  ├─ 5. 狀態更新（processStateUpdate）
+  │     合併 scene/time/weather 變化、emotion 更新、relationship 更新、newEvents
+  │
+  ├─ 6. 圖片觸發（evaluateImageTrigger）
+  │     conservative: 僅 scene level
+  │     standard: scene + behavior
+  │     rich: 更寬鬆
+  │
+  └─ 7. 故事記錄（createStoryEntries）
+        寫入 narration + 所有 dialogues 到 story_log（含 sequence 序號）
+        每個 dialogue 附加 imageTriggerContext（若有圖片觸發）
 ```
 
----
+### Prompt 結構細節
 
-## 已知問題與注意事項
+系統提示（system role）包含以下區塊：
+1. 角色聲明：`你是一個互動敘事遊戲的 AI 遊戲主持人 (Game Master)`
+2. 世界設定：名稱、世界觀、規則、額外 system prompt
+3. 當前狀態：場景、時間、天氣
+4. 角色列表：每個角色的 ID、性別、年齡、性格、外觀（標記玩家角色）
+5. 角色情緒：`{ 角色名: 情緒 }`
+6. 角色關係：`{ characterA → characterB: relation }`
+7. 近期事件：最近 10 條
+8. JSON 輸出格式規範：含完整 schema 範例（narration, dialogues[], stateUpdate, imageTrigger, newCharacters）
+9. 重要規則：使用角色 ID、必須含 narration + 至少一個 dialogue、對話生動自然等
 
-### 建置與執行時期
-1. **Electron 版本鎖定在 33**：electron-vite 5 不相容 Electron 42+。升級前必須驗證相容性。
-2. **better-sqlite3 需重編譯**：postinstall 執行 `electron-rebuild`。若出現 NODE_MODULE_VERSION 錯誤，手動執行：`npx @electron/rebuild -m . -o better-sqlite3`
-3. **Vite 鎖定 5.x**：electron-vite 5 的 peer dependency 限制。@vitejs/plugin-react 必須是 v4。
-4. **TypeScript 6**：`baseUrl` 選項已棄用，需改用 `paths`（目前 tsconfig.web.json 有棄用警告但無功能影響）
+### LLM Provider 實作差異
 
-### 🔴 PowerShell 編碼損毀（重要！）
-**絕對不要**使用 PowerShell 字串操作（`Get-Content -Raw` + `replace` + `Set-Content`）編輯包含 CJK 字元的檔案。應使用 Node.js（`fs.readFileSync` + `fs.writeFileSync` with `'utf8'`）進行檔案編輯。PowerShell 的 `Out-File -Encoding utf8` 會加入 BOM，應使用 `[System.IO.File]::WriteAllText` 或 Node.js。
-
-### 功能限制（v1）
-5. **WorldPreviewPage 為 placeholder**：AI 預覽/自動填寫世界設定尚未實作
-6. **API keys 以純文字儲存**於 settings 表
-7. **角色關係圖**（force-directed）未實作
-8. **虛擬滾動**未實作（長聊天記錄可能有效能問題）
-9. **語音功能**已完全移除
-10. **SettingsPage 使用英文 UI**：為避免 PowerShell UTF-8 損毀而從中文切換
-
-### 圖片系統
-11. **DALL-E 3 不支援 seed**：Visual anchor seeds 僅在 Stability AI 有效
-12. **Stability AI API**：使用 v2beta 端點，可能需要更新
-13. **無圖片清理**：生成的圖片累積在 `userData/images/`
-
-### LM Studio / 本地模型相容性
-14. **apiBaseUrl 必須包含 `/v1`**：正確格式為 `http://192.168.x.x:port/v1`，不含 `/v1` 會導致 LM Studio 回傳空回應
-15. **json_object 格式**：多數本地模型不支援 `response_format: { type: 'json_object' }`。程式已實作自動偵測（localhost/127.0.0.1/192.168. 網段跳過）與自動降級重試（若因 response_format 報錯則移除重試）
-16. **測試連線驗證**：`testLLMConnection` 會檢查回應內容是否有效，避免 LM Studio 錯誤端點回傳 200 造成的假陽性
+| Provider | System Prompt | JSON Mode | baseUrl | 特殊處理 |
+|----------|--------------|-----------|---------|---------|
+| OpenAI | messages[0].role='system' | `response_format: { type: 'json_object' }` | ✅ `baseURL` | 標準 OpenAI SDK |
+| Anthropic | 獨立 `system` 參數 | ❌（不支援） | ✅ `baseURL` | system 和使用者訊息分開傳遞 |
+| Gemini | `systemInstruction` 參數 | ❌（不支援） | ✅ `getGenerativeModel({ baseUrl })` | `startChat()` + history + `sendMessage()` |
 
 ---
 
-## 已修復的 Bugs（歷史記錄）
+## 圖片系統
 
-### Round 1 — ReferenceError + Import 路徑
-- `game.ts:172`：`buildPrompt()` 內使用 `action.worldId` 但 `action` 不在作用域 → 改為 `world.id`
-- `settings.ts:65`：`new GoogleGenerativeAI(apiKey, { baseUrl })` 建構子只接受 1 個參數 → 修正
-- `llm/gemini.ts`：`baseUrl` 參數儲存但未使用 → 在 `getModel()` 和 `chat()` 中正確傳入
-- 7 個檔案：`../../types` → `../types`（import 路徑指向不存在的 `src/main/types`）
+### 兩個 Provider
 
-### Round 2 — choices[0] 崩潰 + LM Studio 相容性
-- `llm/openai.ts:45`：`response.choices[0]?.message?.content` → LM Studio 回傳空回應時 `choices` 為 undefined，在 `?.` 前就崩潰 → 加入 try-catch + `Array.isArray` 檢查
-- `game.ts`：新增 `isLocalModel` 偵測，本地模型跳過 `json_object`；新增自動降級重試
-- `settings.ts`：測試連線加入回應內容驗證，防止假陽性
+| Provider | API | 種子支援 | 實作方式 |
+|----------|-----|---------|---------|
+| `OpenAIImageProvider` | DALL-E 3 (`client.images.generate`) | ❌ | OpenAI SDK + https 下載圖片到 `userData/images/` |
+| `StabilityImageProvider` | Stability AI v2beta (`fetch` POST) | ✅ seed | `FormData` + `fetch()` + base64 解碼寫入檔案 |
 
-### Round 3 — isLocalModel 失效 + 測試假陽性 + json_object 雙重防禦
-- `game.ts:45`：`startsWith('192.168.')` → `includes('192.168.')`（URL 以 `http://` 開頭導致 startsWith 永遠 false）
-- `settings.ts`：`testLLMConnection` 檢查 `testResponse.choices[0]?.message?.content` 是否存在
-- `llm/openai.ts`：所有 `localhost`/`127.0.0.1` 檢測擴展到包含 `192.168.`；錯誤訊息加入 `json_object` 提示
+### 觸發邏輯（evaluateImageTrigger）
+
+- **訊號來源**：LLM 回應中的 `imageTrigger` 欄位
+- **過濾規則**：依 `settings.imageFrequency` 過濾
+  - `conservative`：僅 `level === 'scene'` 觸發
+  - `standard`：`scene` + `behavior` 觸發
+  - `rich`：更寬鬆，所有 `shouldGenerate` 為 true 的都觸發
+- **手動觸發**：GamePage 的相機按鈕和訊息旁的圖示
+- **非同步管線**：文字立即顯示 → 右側面板顯示 🎨 動畫 → 圖片 ready 後 `scene-image-enter` 淡入
+
+### Character Avatar 生成
+
+- 通道：`character:generate-avatar`
+- 邏輯：組裝 prompt（Portrait of {name}, {gender}, {age}...）→ 呼叫圖片 provider → 儲存 visualAnchor（provider, seed, promptTemplate, lastImagePath）→ 更新 character
+
+---
+
+## 頁面功能詳解
+
+### HomePage（首頁）
+- 載入時呼叫 `api.world.list()`
+- 卡片式世界列表，顯示名稱、世界觀摘要（截斷 80 字）、最後更新時間
+- hover 時顯示刪除按鈕（紅色，含 confirm 對話框）
+- 空白狀態：🌌 圖示 + 提示文字
+- 右上角設定按鈕 → SettingsPage
+
+### SettingsPage（設定）
+- **英文 UI**（避免 PowerShell 編碼損毀中文）
+- LLM 設定：Provider 下拉（OpenAI Compatible / Anthropic Compatible / Google Gemini）、Model Name 輸入、API Key（password）、API Base URL（選填，提示含 /v1 範例）
+- Test Connection 按鈕：呼叫 `api.settings.testLLM()`，顯示綠色 OK 或紅色 FAIL
+- 圖片設定：Provider 下拉（None / DALL-E / Stability）、Frequency 下拉、Stability API Key
+- Save Settings / Cancel 按鈕
+
+### WorldCreatePage（建立世界）
+- 三個區塊：世界設定、主角設定、重要角色（可選，動態新增/刪除）
+- 世界設定：名稱*、世界觀*、規則、系統 Prompt、初始場景
+- 主角設定：名稱*、性別、年齡、外觀、性格、額外 Prompt
+- 重要角色：CharacterForm 元件（名稱/性別/年齡 三欄 + 外觀 + 性格 + 額外 Prompt）
+- 提交：建立 world → 建立 player character → 建立 NPCs → 導向 game
+
+### WorldPreviewPage（預覽 - placeholder）
+- ✨ 動畫 + 「AI 正在生成世界設定...」+ 「此功能將在後續版本中完善」
+- 「略過，直接開始」按鈕 → GamePage
+
+### GamePage（核心遊戲）
+- 左側（flex-1）：聊天區域
+  - 訊息列表：narration（置中斜體灰底）、action（置中）、dialogue（左右氣泡）
+  - 玩家氣泡：右側、indigo 漸層、圓角
+  - NPC 氣泡：左側、暗色面板、圓角
+  - 每條訊息顯示：頭像（首字母）、名稱、情緒標籤
+  - 聊天動畫：`chat-bubble-enter`（slideUp 0.3s）
+  - 自動捲動到底部
+- 右側（w-80）：場景插畫面板
+  - 生成中：🎨 動畫 + 「繪製中...」
+  - 有圖片：`<img src="file://...">`  + `scene-image-enter` 淡入
+  - 無圖片：🖼️ + 「尚無場景插畫」
+  - 底部資訊卡：場景名、時間、天氣、在場角色標籤
+- 底部輸入區：輸入框 + 發送按鈕（Enter 發送）
+- 新角色確認：AI 建議新角色時顯示確認對話框
+
+### StoryLogPage（故事日誌）
+- 載入時並行請求：`getLog` + `getWorld` + `listCharacters`
+- 垂直時間線設計：左側漸層線 + 彩色圓點
+  - narration = slate 灰、action = indigo 藍紫、monologue = purple 紫、dialogue = emerald 綠
+- 每條顯示：時間戳（toLocaleTimeString zh-TW）、類型標籤、內容文字、情緒（若有）
+
+---
+
+## UI 設計系統
+
+### 色系（Tailwind `game-*`）
+
+```
+game-bg:          #0b1120  深藍黑背景
+game-panel:       #1e293b  面板/卡片
+game-accent:      #334155  邊框/分隔線
+game-highlight:   #6366f1  主要強調色（indigo-500）
+game-highlight-soft: #818cf8  次要強調（indigo-400）
+game-text:        #f1f5f9  主要文字
+game-muted:       #94a3b8  次要/提示文字
+game-success:     #34d399  成功
+game-danger:      #f87171  危險/刪除
+game-bubble-player:  #312e81  玩家氣泡
+game-bubble-npc:     #1e293b  NPC 氣泡
+game-bubble-narration: #0f172a  敘述氣泡
+```
+
+### 自訂 CSS 工具類（`index.css`）
+
+- `.glass-panel`：毛玻璃效果（`backdrop-filter: blur(12px)`）
+- `.gradient-text`：漸層文字（indigo 135deg，`background-clip: text`）
+- `.btn-primary`：漸層按鈕（hover 時光影增強）
+- `.chat-bubble-enter`：訊息進入動畫（slideUp 0.3s）
+- `.scene-image-enter`：圖片淡入（fadeIn 0.5s）
+- `.generating-pulse`：載入脈衝動畫（pulseSoft 2s）
+
+### 動畫（Tailwind config）
+
+- `fade-in`：opacity 0→1（0.5s）
+- `slide-up`：translateY(10px)→0 + opacity（0.3s）
+- `pulse-soft`：opacity 1↔0.6（2s）
+- `glow`：boxShadow 變化（2s alternate）
+
+### 字型
+
+```css
+font-family: 'Inter', 'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', 'Noto Sans TC', system-ui, sans-serif;
+```
+
+Inter 從 Google Fonts 載入（`index.html` 中 preconnect 優化）。
+
+### 捲軸樣式
+
+寬度 6px，thumb `#334155`，track `#0f172a`，hover `#475569`。
+
+---
+
+## 已知問題清單
+
+### 🔴 嚴重（可能導致資料損壞）
+1. **PowerShell 編碼損毀**：`Get-Content -Raw` + `replace` + `Set-Content` 會破壞 CJK 多位元組字元。必須使用 Node.js `fs.readFileSync/fs.writeFileSync` with `'utf8'`。PowerShell `Out-File -Encoding utf8` 會添加 BOM，應使用 `[System.IO.File]::WriteAllText` 或 Node.js。
+
+### 🟡 建置與執行時期
+2. **Electron 33 鎖定**：不可升級到 42+
+3. **better-sqlite3 重編譯**：若出現 NODE_MODULE_VERSION 錯誤，手動 `npx @electron/rebuild -m . -o better-sqlite3`
+4. **Vite 5 / plugin-react v4 鎖定**
+5. **TS6305 錯誤**：`tsc --noEmit -p tsconfig.node.json` 時 `out/` 目錄中的 `.d.ts` 檔案未從原始檔建置（複合專案問題，不影響 electron-vite 建置）
+6. **electron.vite.config.ts TS2769**：`outDir` 屬性不被 electron-vite 型別接受（electron-vite 內部處理，無功能影響）
+
+### 🟢 功能限制（v1）
+7. **WorldPreviewPage 為 placeholder**：AI 預覽/自動填寫世界設定尚未實作
+8. **API keys 純文字儲存**於 SQLite
+9. **角色關係圖**（force-directed）未實作
+10. **虛擬滾動**未實作（長聊天記錄效能問題）
+11. **語音功能**已完全移除
+12. **無圖片清理**：生成圖片累積在 `userData/images/`
+13. **DALL-E 3 不支援 seed**：角色視覺一致性僅在 Stability AI 有效
+14. **Stability AI v2beta**：API 可能需更新
+
+### 🔵 LM Studio / 本地模型相容性
+15. **apiBaseUrl 必須包含 `/v1`**：正確 `http://192.168.x.x:port/v1`，不含會回傳空回應
+16. **json_object 格式**：多數本地模型不支援，程式已實作自動偵測（localhost/127.0.0.1/192.168.）+ 自動降級重試
+17. **測試連線假陽性**：LM Studio 對錯誤端點仍回 200，程式已實作回應內容驗證
+
+---
+
+## 已修復 Bugs 歷史
+
+### Round 1 — ReferenceError + Import 路徑修正
+| 檔案 | 行號 | 問題 | 修復 |
+|------|------|------|------|
+| `game.ts` | 172 | `action.worldId` 在 `buildPrompt()` 內未定義 | → `world.id` |
+| `settings.ts` | 65 | `new GoogleGenerativeAI(apiKey, { baseUrl })` 建構子參數錯誤 | → 只傳 apiKey，baseUrl 改由 `getGenerativeModel()` 傳入 |
+| `llm/gemini.ts` | - | `baseUrl` 儲存但從未使用 | → `getModel()` 和 `chat()` 正確傳入 |
+| 7 個檔案 | - | `../../types` 解析到不存在的 `src/main/types` | → `../types` 正確指向 `src/main/services/types` |
+
+### Round 2 — choices[0] 崩潰 + 本地模型相容性
+| 檔案 | 行號 | 問題 | 修復 |
+|------|------|------|------|
+| `llm/openai.ts` | 45 | `response.choices[0]` 在 LM Studio 空回應時崩潰 | → try-catch + `Array.isArray` 檢查 + 錯誤提示 |
+| `game.ts` | 42-47 | 無本地模型偵測 | → 新增 `isLocalModel` 偵測，跳過 `json_object` |
+| `game.ts` | 200+ | `parseLLMOutput` JSON 提取不完整 | → 新增 `{...}` 邊界搜尋（Strategy 1） |
+| `settings.ts` | - | 測試連線不驗證回應 | → 檢查 `choices[0].message.content` 存在 |
+
+### Round 3 — isLocalModel 失效 + 雙重防禦
+| 檔案 | 行號 | 問題 | 修復 |
+|------|------|------|------|
+| `game.ts` | 45 | `startsWith('192.168.')` 不匹配 `http://` 前綴 | → `includes('192.168.')` |
+| `game.ts` | 48-68 | `json_object` 報錯直接崩潰 | → 新增 try-catch + 自動降級重試 |
+| `settings.ts` | 44-56 | 測試連線假陽性 | → 驗證回應內容 + 本地端點提示 `/v1` |
+| `llm/openai.ts` | 48,57 | `localhost`/`127.0.0.1` 檢測不含 `192.168.` | → 全部位置加入 `192.168.` |
 
 ---
 
 ## 編碼規範
 
-### 命名
-- 檔案：camelCase（`gameStore.ts`），頁面元件 PascalCase（`GamePage.tsx`）
-- 函數：camelCase（`createWorld`, `processGameAction`）
-- 型別/介面：PascalCase（`WorldConfig`, `StructuredLLMOutput`）
-- 常數：UPPER_SNAKE_CASE（`IPC_CHANNELS`, `DEFAULT_SETTINGS`）
-- DB 欄位：snake_case（`world_id`, `created_at`）
+### 命名規則
+- **檔案**：camelCase（`gameStore.ts`），頁面元件 PascalCase（`GamePage.tsx`）
+- **函數**：camelCase（`createWorld`, `processGameAction`）
+- **型別/介面**：PascalCase（`WorldConfig`, `StructuredLLMOutput`）
+- **常數**：UPPER_SNAKE_CASE（`IPC_CHANNELS`, `DEFAULT_SETTINGS`）
+- **DB 欄位**：snake_case（`world_id`, `created_at`）
+- **IPC 通道**：`domain:action`（`world:create`, `game:action`）
 
 ### 模組組織
-- `services/types.ts` 是所有共享型別的**唯一來源**
-- 主進程服務按功能分離（每個網域一個檔案）
+- `services/types.ts` 是**所有共享型別的唯一來源**
+- 主進程服務按功能分離（一個網域一個檔案）
 - Renderer 使用 pages + stores 分離
-- IPC 通道遵循 `domain:action` 命名（`world:create`）
+- 每個 service 檔案 export 明確的 CRUD 函數
 
 ### 錯誤處理
-- 主進程 handlers 拋出錯誤，Electron 傳播到 renderer
-- Renderer 包裹 IPC 呼叫於 try-catch，透過 `alert()` 顯示
-- 圖片生成失敗為靜默降級
+- 主進程 handlers 拋出錯誤 → Electron 傳播到 renderer → `catch` 顯示 `alert()`
+- 圖片生成失敗：靜默降級（不影響遊戲進行）
+- LLM 呼叫失敗：自動降級重試（移除 json_object）→ 若再失敗則 alert
 
-### UI 設計系統
-- 暗色主題：`bg-game-bg` (#0b1120), `bg-game-panel` (#1e293b)
-- 強調色：`game-highlight` (#6366f1 indigo)
-- 文字：`game-text` (#f1f5f9), `game-muted` (#94a3b8)
-- 工具類：`.glass-panel`（毛玻璃效果）、`.gradient-text`（漸層文字）、`.btn-primary`（漸層按鈕）
-- 動畫：`fadeIn`, `slideUp`, `pulseSoft`, `glow`
-- 字型：Inter > Segoe UI > Microsoft JhengHei > PingFang TC > Noto Sans TC（中英文混合）
-
-### 頁面路由
-使用 Zustand `appStore.currentPage` 做簡單切換（非 React Router），值為 union type：
-`'home' | 'world-create' | 'world-edit' | 'world-preview' | 'game' | 'settings' | 'story-log'`
+### 行尾符號
+- 主進程檔案：LF
+- Renderer 檔案：CRLF
+- Git `core.autocrlf` 自動處理轉換
 
 ---
 
 ## 安全編輯檢查清單
 
-編輯檔案前務必確認：
-- [ ] 檔案是否包含中文/CJK 字元？→ 使用 Node.js 而非 PowerShell
-- [ ] 是否在 `services/types.ts` 新增或修改型別？→ 同步檢查所有參照
-- [ ] 是否修改 IPC 通道？→ 同步更新 preload/index.ts 和 ipc-handlers.ts
-- [ ] 是否修改 `response.choices` 相關程式碼？→ 務必使用 `?.` 或 `Array.isArray` 防禦
+在修改程式碼之前，確認以下事項：
+
+- [ ] 檔案是否包含中文/CJK？→ 使用 Node.js `fs` 模組，不用 PowerShell
+- [ ] 是否修改 `types.ts`？→ 檢查所有 import 此型別的檔案
+- [ ] 是否修改 IPC 通道？→ 同步更新 preload/index.ts + ipc-handlers.ts
 - [ ] 是否修改 LLM provider？→ 測試 OpenAI 官方 + LM Studio 兩種場景
-- [ ] 行尾符號：主進程檔案使用 LF，renderer 檔案使用 CRLF（Git 自動轉換）
+- [ ] 是否修改 `response.choices` 相關？→ 務必 `Array.isArray` 或 `?.` 防禦
+- [ ] 是否修改遊戲引擎？→ 確認 `parseLLMOutput` fallback 仍有效
+- [ ] 是否寫入新檔案？→ 檢查 `.gitignore`，避免提交暫存檔
 
 ---
 
-## 開發流程建議
+## 開發流程
 
-1. `npm run dev` 啟動開發伺服器（HMR）
-2. 修改程式碼後觀察 renderer 熱更新
-3. 若修改 main process，需手動重啟（Ctrl+R 在 Electron 視窗中）
-4. 提交前執行 `npx tsc --noEmit -p tsconfig.node.json` + `npm run build` 確認無誤
-5. 使用 LM Studio 等本地模型測試時，確保 `apiBaseUrl` 包含 `/v1`
+```powershell
+# 1. 啟動開發
+npm run dev          # electron-vite dev（HMR for renderer）
+                     # 修改 main process 需在 Electron 視窗中 Ctrl+R
+
+# 2. 型別檢查（提交前）
+npx tsc --noEmit -p tsconfig.node.json   # 主進程
+npx tsc --noEmit -p tsconfig.web.json    # Renderer
+
+# 3. 建置
+npm run build        # 三目標建置（main/preload/renderer）
+
+# 4. 打包
+npm run package      # electron-builder → dist/ (NSIS installer)
+
+# 5. 提交
+git add <files>
+git commit -m "type: description"
+git push
+```
+
+### 測試 LM Studio 注意事項
+
+1. 啟動 LM Studio，載入模型，確認 API 伺服器執行中
+2. SettingsPage 中 `API Base URL` 設為 `http://localhost:1234/v1`（**必須含 `/v1`**）
+3. `Provider` 選 `OpenAI Compatible`
+4. `Model Name` 填入 LM Studio 顯示的完整模型名稱
+5. 點擊 `Test Connection` → 應顯示綠色 `OK`
+6. 遊戲中程式會自動偵測本地模型並跳過 `json_object` 格式
+7. 若仍報錯，程式已實作自動降級重試機制
