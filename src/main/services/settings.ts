@@ -15,6 +15,12 @@ export function getSettings(): AppSettings {
       ;(settings as Record<string, unknown>)[row.key] = row.value
     }
   }
+  // Coerce DB string values to proper types
+  if (settings.activeLlmConfigId === '') settings.activeLlmConfigId = null
+  if (settings.activeImageConfigId === '') settings.activeImageConfigId = null
+  if (settings.activeVoiceConfigId === '') settings.activeVoiceConfigId = null
+  if ((settings as any).autoPlayVoice === 'true') (settings as any).autoPlayVoice = true
+  if ((settings as any).autoPlayVoice === 'false') (settings as any).autoPlayVoice = false
   return settings
 }
 

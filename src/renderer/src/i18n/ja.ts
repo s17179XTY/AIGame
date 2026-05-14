@@ -1,10 +1,22 @@
 ﻿export default {
   app: { title: 'AIノベルゲーム', loading: '読み込み中...' },
-  home: { title: 'マイワールド', createWorld: '新規ワールド作成', noWorlds: 'ワールドがありません', noWorldsHint: '上のボタンをクリックして冒険を始めましょう', settings: '設定', enter: '入る', delete: '削除', confirmDelete: 'このワールドを削除しますか？' },
+  home: { title: 'マイワールド',
+    characters: 'キャラクターテンプレート',
+    addCharacter: '+ キャラクター追加',
+    noCharacters: 'テンプレートがありません',
+    noCharactersHint: '上のボタンをクリックしてキャラクターを作成してください', createWorld: '新規ワールド作成', noWorlds: 'ワールドがありません', noWorldsHint: '上のボタンをクリックして冒険を始めましょう', settings: '設定', enter: '入る', delete: '削除', confirmDelete: 'このワールドを削除しますか？' },
   settings: { title: '設定', back: '← 戻る', llmConfigs: 'LLM設定', imageConfigs: '画像生成設定', voiceConfigs: '音声設定', imageFrequency: '画像生成頻度', add: '+ 追加', noConfigs: '設定がありません。「+ 追加」をクリックして作成', ping: 'テスト', active: '有効', edit: '編集', del: '削除', save: '設定を保存', cancel: 'キャンセル', newConfig: '新規設定', editConfig: '設定を編集', name: '名前', nameRequired: '名前（必須）', provider: 'プロバイダー', model: 'モデル', modelName: 'モデル名', apiKey: 'APIキー', apiBaseUrl: 'APIベースURL', apiBaseUrlHint: '（任意、/v1を含む）', size: 'サイズ', quality: '品質', voice: '音声', speed: '速度', autoPlayVoice: '自動読み上げ', autoPlayVoiceDesc: '音声APIが設定されている場合、キャラクターの会話を自動再生', language: '言語', conservative: '控えめ（シーン変更のみ）', standard: '標準（シーン＋主要アクション）', rich: 'リッチ（より多くのトリガー）', testSuccess: '接続成功', testFail: '接続失敗', saveWorldSettings: 'ワールド設定を保存', nameWorldviewRequired: '名前と世界観は必須です', llmTab: 'LLM', imageTab: '画像', voiceTab: '音声' },
   worldCreate: { title: '新規ワールド作成', back: '← 戻る', worldSettings: 'ワールド設定', worldName: 'ワールド名', worldNamePlaceholder: '例：剣と魔法の大陸', worldview: '世界観', worldviewPlaceholder: '背景、歴史、システムを記述...', rules: 'ルール', rulesPlaceholder: 'この世界の法則と制限', systemPrompt: 'システムプロンプト', systemPromptPlaceholder: 'AIへの追加システム指示', initialScene: '初期シーン', initialScenePlaceholder: 'ゲーム開始時のシーン説明', playerSettings: '主人公設定', playerName: '主人公名', playerNamePlaceholder: 'あなたのキャラクター名', gender: '性別', genderPlaceholder: '男性 / 女性 / その他', age: '年齢', appearance: '外見', appearancePlaceholder: '身長、髪色、服装スタイル...', personality: '性格', personalityPlaceholder: '核心的な性格特性、価値観、話し方...', extraPrompt: '追加プロンプト', extraPromptPlaceholder: 'AI生成時の特別な要件', importantChars: '重要キャラクター', importantCharsOptional: '（任意）', addChar: '+ キャラクター追加', noCharsYet: '重要キャラクターが追加されていません。AIがゲーム中に補完できます', charNumber: 'キャラクター #', createBtn: 'ワールドを作成して冒険開始', creating: '作成中...', fillRequired: 'ワールド名と世界観は必須です', fillPlayerName: '主人公名は必須です', createFailed: '作成に失敗しました', charModalTitle: 'キャラクター追加', nameRequired: '名前', genderRequired: '性別', ageRequired: '年齢', charImage: 'キャラクター画像', charImageOptional: '（任意）', uploadImage: '画像をアップロード', changeImage: '画像を変更', confirmAdd: '追加確認', appearanceDesc: '外見の説明', fillCharRequired: '名前、性別、年齢を入力してください' },
   game: { send: '送信', inputPlaceholder: 'アクションや会話を入力...', freePlaceholder: '行動を記述... または (XXXと話す) で会話開始', processing: 'AI思考中...', aiError: 'AI応答失敗', drawing: '描画中...', noScene: 'シーンイラストがまだありません', generateScene: '上の🎲をクリックして生成', sceneCharacters: '登場キャラクター', free: '自由', talk: '会話', gmPanel: 'GMパネル', gmPlaceholder: 'GMコマンド...', gmHint: 'このパネルでワールド設定、キャラクター、ルールを直接変更できます', worldSettings: 'ワールド設定', newCharRequest: 'AIが新キャラクターを提案', confirmChar: '追加確認', skipChar: 'スキップ', newCharFailed: 'キャラクター追加失敗', delConfirm: 'このメッセージを削除しますか？', rollbackConfirm: 'この地点以降のすべてのメッセージを削除しますか？', readAloud: '読み上げ', stopRead: '停止' },
   storyLog: { title: 'ストーリーログ', back: '← 戻る', typeNarration: 'ナレーション', typeAction: 'アクション', typeMonologue: 'モノローグ', typeDialogue: '会話', noEntries: 'ストーリー記録がありません' },
   worldSettingsModal: { worldSettings: '設定', characters: 'キャラクター', saveWorld: 'ワールド設定を保存', saving: '保存中...', saveFailed: '保存失敗', editChar: 'キャラクター編集', backToList: '← リストに戻る', deleteCharConfirm: 'このキャラクターを削除しますか？', deleteFailed: '削除失敗' },
+  gmPanel: {
+    title: 'GMパネル',
+    hint: 'GMコマンドを入力して世界設定、キャラクター、ルールを変更します。\n例：「天気を嵐に変更」または「Bobというキャラクターを追加」',
+    processing: '処理中...',
+    placeholder: 'GMコマンド...',
+    send: '送信',
+    error: 'エラー',
+  },
   common: { save: '保存', cancel: 'キャンセル', confirm: '確認', delete: '削除', edit: '編集', close: '閉じる', back: '戻る', loading: '読み込み中...', error: 'エラー', unknownError: '不明なエラー' }
 }

@@ -10,6 +10,7 @@ interface Props {
 }
 
 export default function WorldSettingsModal({ worldId, onClose, onWorldUpdated }: Props) {
+  const { t } = useI18n()
   const [tab, setTab] = useState<'world' | 'characters'>('world')
   const [world, setWorld] = useState<World | null>(null)
   const [config, setConfig] = useState<WorldConfig>({
@@ -23,6 +24,7 @@ export default function WorldSettingsModal({ worldId, onClose, onWorldUpdated }:
   const [editingChar, setEditingChar] = useState<Character | null>(null)
   const [charForm, setCharForm] = useState<CharacterConfig & { imagePath?: string }>({
     name: '',
+    nickname: '',
     gender: '',
     age: 0,
     appearance: '',
@@ -68,6 +70,7 @@ export default function WorldSettingsModal({ worldId, onClose, onWorldUpdated }:
     setEditingChar(char)
     setCharForm({
       name: char.name,
+      nickname: char.nickname || '',
       gender: char.gender,
       age: char.age,
       appearance: char.appearance,
@@ -118,7 +121,7 @@ export default function WorldSettingsModal({ worldId, onClose, onWorldUpdated }:
   }
 
   const inputClass = 'w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none text-sm'
-  const textareaClass = 'w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none text-sm resize-none'
+  const textareaClass = 'w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none text-sm resize-y'
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -126,7 +129,7 @@ export default function WorldSettingsModal({ worldId, onClose, onWorldUpdated }:
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-game-accent/20">
           <h3 className="text-lg font-semibold text-game-highlight">
-            {world?.name ?? 'World'} Settings
+            {world?.name ?? 'World'} · {t('worldSettingsModalForm.worldSettings')}
           </h3>
           <button onClick={onClose} className="text-game-muted hover:text-game-text text-xl">&times;</button>
         </div>
@@ -141,7 +144,7 @@ export default function WorldSettingsModal({ worldId, onClose, onWorldUpdated }:
                 : 'text-game-muted hover:text-game-text'
             }`}
           >
-            World Settings
+            {t('worldSettingsModalForm.worldSettings')}
           </button>
           <button
             onClick={() => setTab('characters')}
@@ -151,7 +154,7 @@ export default function WorldSettingsModal({ worldId, onClose, onWorldUpdated }:
                 : 'text-game-muted hover:text-game-text'
             }`}
           >
-            Characters ({characters.length})
+            {t('worldSettingsModalForm.characters')} ({characters.length})
           </button>
         </div>
 
@@ -160,38 +163,38 @@ export default function WorldSettingsModal({ worldId, onClose, onWorldUpdated }:
           {tab === 'world' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-game-muted mb-1">Name *</label>
+                <label className="block text-sm text-game-muted mb-1">{t('worldSettingsModalForm.name')} *</label>
                 <input type="text" value={config.name}
                   onChange={(e) => setConfig((c) => ({ ...c, name: e.target.value }))}
                   className={inputClass} />
               </div>
               <div>
-                <label className="block text-sm text-game-muted mb-1">Worldview *</label>
+                <label className="block text-sm text-game-muted mb-1">{t('worldSettingsModalForm.worldview')} *</label>
                 <textarea value={config.worldview}
                   onChange={(e) => setConfig((c) => ({ ...c, worldview: e.target.value }))}
                   rows={4} className={textareaClass} />
               </div>
               <div>
-                <label className="block text-sm text-game-muted mb-1">Rules</label>
+                <label className="block text-sm text-game-muted mb-1">{t('worldSettingsModalForm.rules')}</label>
                 <textarea value={config.rules}
                   onChange={(e) => setConfig((c) => ({ ...c, rules: e.target.value }))}
                   rows={3} className={textareaClass} />
               </div>
               <div>
-                <label className="block text-sm text-game-muted mb-1">System Prompt</label>
+                <label className="block text-sm text-game-muted mb-1">{t('worldSettingsModalForm.systemPrompt')}</label>
                 <textarea value={config.systemPrompt}
                   onChange={(e) => setConfig((c) => ({ ...c, systemPrompt: e.target.value }))}
                   rows={3} className={textareaClass} />
               </div>
               <div>
-                <label className="block text-sm text-game-muted mb-1">Initial Scene</label>
-                <input type="text" value={config.initialScene}
+                <label className="block text-sm text-game-muted mb-1">{t('worldSettingsModalForm.initialScene')}</label>
+                <textarea value={config.initialScene}
                   onChange={(e) => setConfig((c) => ({ ...c, initialScene: e.target.value }))}
-                  className={inputClass} />
+                  rows={2} className={textareaClass} />
               </div>
               <button onClick={handleSaveWorld} disabled={saving}
                 className="w-full py-2.5 bg-game-highlight rounded-xl font-medium hover:bg-game-highlight/80 transition-colors disabled:opacity-50">
-                {saving ? 'Saving...' : 'Save World Settings'}
+                {saving ? t('worldSettingsModal.saving') : t('worldSettingsModal.saveWorld')}
               </button>
             </div>
           )}
@@ -201,45 +204,51 @@ export default function WorldSettingsModal({ worldId, onClose, onWorldUpdated }:
               {editingChar ? (
                 <div className="space-y-4">
                   <button onClick={() => setEditingChar(null)}
-                    className="text-sm text-game-muted hover:text-game-text mb-2">&larr; Back to list</button>
+                    className="text-sm text-game-muted hover:text-game-text mb-2">&larr; {t('worldSettingsModal.backToList')}</button>
+                  <div>
+                    <label className="block text-xs text-game-muted mb-1">{t('worldSettingsModalForm.nickname')}</label>
+                    <input type="text" value={charForm.nickname || ''}
+                      onChange={(e) => setCharForm((f) => ({ ...f, nickname: e.target.value }))}
+                      className={inputClass} />
+                  </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-xs text-game-muted mb-1">Name</label>
+                      <label className="block text-xs text-game-muted mb-1">{t('worldSettingsModalForm.name')}</label>
                       <input type="text" value={charForm.name}
                         onChange={(e) => setCharForm((f) => ({ ...f, name: e.target.value }))}
                         className={inputClass} />
                     </div>
                     <div>
-                      <label className="block text-xs text-game-muted mb-1">Gender</label>
+                      <label className="block text-xs text-game-muted mb-1">{t('worldSettingsModalForm.gender')}</label>
                       <input type="text" value={charForm.gender}
                         onChange={(e) => setCharForm((f) => ({ ...f, gender: e.target.value }))}
                         className={inputClass} />
                     </div>
                     <div>
-                      <label className="block text-xs text-game-muted mb-1">Age</label>
+                      <label className="block text-xs text-game-muted mb-1">{t('worldSettingsModalForm.age')}</label>
                       <input type="number" value={charForm.age || ''}
                         onChange={(e) => setCharForm((f) => ({ ...f, age: parseInt(e.target.value) || 0 }))}
                         className={inputClass} />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs text-game-muted mb-1">Appearance</label>
+                    <label className="block text-xs text-game-muted mb-1">{t('worldSettingsModalForm.appearance')}</label>
                     <input type="text" value={charForm.appearance}
                       onChange={(e) => setCharForm((f) => ({ ...f, appearance: e.target.value }))}
                       className={inputClass} />
                   </div>
                   <div>
-                    <label className="block text-xs text-game-muted mb-1">Personality</label>
+                    <label className="block text-xs text-game-muted mb-1">{t('worldSettingsModalForm.personality')}</label>
                     <textarea value={charForm.personality}
                       onChange={(e) => setCharForm((f) => ({ ...f, personality: e.target.value }))}
                       rows={2} className={textareaClass} />
                   </div>
                   <div>
-                    <label className="block text-xs text-game-muted mb-1">Image</label>
+                    <label className="block text-xs text-game-muted mb-1">{t('worldSettingsModalForm.image')}</label>
                     <div className="flex items-center gap-3">
                       <button onClick={handleCharImageUpload}
                         className="px-3 py-1.5 text-xs border border-game-highlight/30 rounded-lg text-game-highlight hover:bg-game-highlight/10">
-                        {charForm.imagePath ? 'Change' : 'Upload'}
+                        {charForm.imagePath ? t('worldSettingsModalForm.change') : t('worldSettingsModalForm.upload')}
                       </button>
                       {charForm.imagePath && (
                         <img src={`file://${charForm.imagePath}`} alt="preview"
@@ -248,14 +257,14 @@ export default function WorldSettingsModal({ worldId, onClose, onWorldUpdated }:
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs text-game-muted mb-1">Extra Prompt</label>
-                    <input type="text" value={charForm.extraPrompt}
+                    <label className="block text-xs text-game-muted mb-1">{t('worldSettingsModalForm.extraPrompt')}</label>
+                    <textarea value={charForm.extraPrompt}
                       onChange={(e) => setCharForm((f) => ({ ...f, extraPrompt: e.target.value }))}
-                      className={inputClass} />
+                      rows={3} className={textareaClass} />
                   </div>
                   <button onClick={handleSaveChar} disabled={saving}
                     className="w-full py-2 bg-game-highlight rounded-xl font-medium hover:bg-game-highlight/80 disabled:opacity-50">
-                    Save Character
+                    {t('worldSettingsModalForm.saveCharacter')}
                   </button>
                 </div>
               ) : (
@@ -277,7 +286,7 @@ export default function WorldSettingsModal({ worldId, onClose, onWorldUpdated }:
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-game-text">{char.name}</span>
                           {char.isPlayer && (
-                            <span className="text-xs px-1.5 py-0.5 rounded bg-game-highlight/20 text-game-highlight">Player</span>
+                            <span className="text-xs px-1.5 py-0.5 rounded bg-game-highlight/20 text-game-highlight">{t('worldSettingsModalForm.player')}</span>
                           )}
                         </div>
                         <p className="text-xs text-game-muted">{char.gender} · {char.age}yo</p>
@@ -285,7 +294,7 @@ export default function WorldSettingsModal({ worldId, onClose, onWorldUpdated }:
                       </div>
                       <button onClick={(e) => { e.stopPropagation(); handleDeleteChar(char.id) }}
                         className="px-2 py-1 text-xs border border-red-500/30 rounded text-red-400 hover:border-red-500 shrink-0">
-                        Del
+                        {t('worldSettingsModalForm.del')}
                       </button>
                     </div>
                   ))}

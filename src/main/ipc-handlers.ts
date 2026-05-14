@@ -1,8 +1,8 @@
 import { ipcMain } from 'electron'
-import { IPC_CHANNELS, WorldConfig } from './services/types'
+import { IPC_CHANNELS, WorldConfig, StoryEntry } from './services/types'
 import { createWorld, getWorld, listWorlds, updateWorld, deleteWorld, getWorldState } from './services/world'
-import { createCharacter, getCharacter, listCharacters, updateCharacter, deleteCharacter, uploadCharacterImage } from './services/character'
-import { processGameAction, getStoryLog, deleteStoryEntry, deleteStoryAfter } from './services/game'
+import { createCharacter, getCharacter, listCharacters, updateCharacter, deleteCharacter, uploadCharacterImage, listGlobalCharacters, assignCharacterToWorld } from './services/character'
+import { processGameAction, processGMCommand, getStoryLog, deleteStoryEntry, deleteStoryAfter, generateOpeningNarration } from './services/game'
 import { getSettings, updateSettings, testLLMConnection, listConfigs, getConfig, createConfig, updateConfig, deleteConfig, setActiveConfig, getActiveConfig, pingConfig, listImageConfigs, getImageConfig, createImageConfig, updateImageConfig, deleteImageConfig, setActiveImageConfig, getActiveImageConfig, pingImageConfig, listVoiceConfigs, getVoiceConfig, createVoiceConfig, updateVoiceConfig, deleteVoiceConfig, setActiveVoiceConfig, getActiveVoiceConfig, pingVoiceConfig } from './services/settings'
 import { OpenAIImageProvider, StabilityImageProvider } from './services/image'
 import { createVoiceProvider } from './services/voice'
@@ -59,6 +59,14 @@ export function registerIpcHandlers(): void {
     return uploadCharacterImage(characterId, sourcePath)
   })
 
+  ipcMain.handle(IPC_CHANNELS.CHARACTER_LIST_GLOBAL, () => {
+    return listGlobalCharacters()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.CHARACTER_ASSIGN_WORLD, (_event, characterId: string, worldId: string) => {
+    return assignCharacterToWorld(characterId, worldId)
+  })
+
   ipcMain.handle(IPC_CHANNELS.CHARACTER_GENERATE_AVATAR, async (_event, characterId: string) => {
     const imageCfg = getActiveImageConfig()
     if (!imageCfg) {
@@ -95,6 +103,14 @@ export function registerIpcHandlers(): void {
   // ---- Game handlers ----
   ipcMain.handle(IPC_CHANNELS.GAME_ACTION, async (_event, action: any) => {
     return processGameAction(action)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.GAME_GM_ACTION, async (_event, worldId: string, command: string) => {
+    return processGMCommand(worldId, command)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.GAME_START, async (_event, worldId: string) => {
+    return generateOpeningNarration(worldId)
   })
 
   // ---- Image handlers ----

@@ -16,12 +16,13 @@ export function createCharacter(
   const now = new Date().toISOString()
 
   db.prepare(
-    `INSERT INTO characters (id, world_id, name, gender, age, appearance, personality, extra_prompt, is_player, is_dynamic, is_locked, visual_anchor, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO characters (id, world_id, name, nickname, gender, age, appearance, personality, extra_prompt, is_player, is_dynamic, is_locked, visual_anchor, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id,
     worldId,
     config.name,
+    config.nickname || '',
     config.gender,
     config.age,
     config.appearance,
@@ -37,7 +38,14 @@ export function createCharacter(
   return {
     id,
     worldId,
-    ...config,
+    name: config.name,
+    nickname: config.nickname,
+    gender: config.gender,
+    age: config.age,
+    appearance: config.appearance,
+    personality: config.personality,
+    extraPrompt: config.extraPrompt,
+    imagePath: config.imagePath,
     isPlayer,
     isDynamic,
     isLocked: false,
@@ -59,6 +67,22 @@ export function listCharacters(worldId: string): Character[] {
   return rows.map(rowToCharacter)
 }
 
+export function listGlobalCharacters(): Character[] {
+  const db = getDatabase()
+  const rows = db.prepare("SELECT * FROM characters WHERE world_id = '__global__' ORDER BY created_at ASC").all() as Record<string, unknown>[]
+  return rows.map(rowToCharacter)
+}
+
+export function assignCharacterToWorld(characterId: string, worldId: string): Character | null {
+  const db = getDatabase()
+  const existing = getCharacter(characterId)
+  if (!existing) return null
+  if (existing.worldId !== '__global__') return null // Only global templates can be assigned
+
+  db.prepare('UPDATE characters SET world_id = ? WHERE id = ?').run(worldId, characterId)
+  return getCharacter(characterId)
+}
+
 export function getPlayerCharacter(worldId: string): Character | null {
   const db = getDatabase()
   const row = db.prepare(
@@ -76,6 +100,7 @@ export function updateCharacter(id: string, updates: Partial<CharacterConfig & {
   db.prepare(
     `UPDATE characters SET
       name = COALESCE(?, name),
+      nickname = COALESCE(?, nickname),
       gender = COALESCE(?, gender),
       age = COALESCE(?, age),
       appearance = COALESCE(?, appearance),
@@ -86,6 +111,7 @@ export function updateCharacter(id: string, updates: Partial<CharacterConfig & {
      WHERE id = ?`
   ).run(
     updates.name ?? null,
+    updates.nickname ?? null,
     updates.gender ?? null,
     updates.age ?? null,
     updates.appearance ?? null,
@@ -130,6 +156,7 @@ function rowToCharacter(row: Record<string, unknown>): Character {
     id: row.id as string,
     worldId: row.world_id as string,
     name: row.name as string,
+    nickname: row.nickname as string || undefined,
     gender: row.gender as string,
     age: row.age as number,
     appearance: row.appearance as string,

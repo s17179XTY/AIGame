@@ -30,6 +30,7 @@ function initializeSchema(db: Database.Database): void {
       id TEXT PRIMARY KEY,
       world_id TEXT NOT NULL,
       name TEXT NOT NULL,
+      nickname TEXT NOT NULL DEFAULT '',
       gender TEXT NOT NULL DEFAULT '',
       age INTEGER NOT NULL DEFAULT 0,
       appearance TEXT NOT NULL DEFAULT '',
@@ -124,6 +125,9 @@ function initializeSchema(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_story_log_world ON story_log(world_id);
     CREATE INDEX IF NOT EXISTS idx_story_log_sequence ON story_log(world_id, sequence);
   `)
+
+  try { db.exec("ALTER TABLE characters ADD COLUMN nickname TEXT NOT NULL DEFAULT ''"); } catch {}
+  try { db.exec("ALTER TABLE characters ADD COLUMN image_path TEXT"); } catch {}
 }
 
 export function closeDatabase(): void {

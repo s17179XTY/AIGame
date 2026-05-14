@@ -36,6 +36,10 @@ export default function GamePage() {
 
   const chatEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const dividerRef = useRef<HTMLDivElement>(null)
+
+  const [panelWidth, setPanelWidth] = useState(320)
+  const [isDragging, setIsDragging] = useState(false)
 
   useEffect(() => {
     if (!worldId) { setPage('home'); return }
@@ -51,11 +55,41 @@ export default function GamePage() {
       const log = await window.api.story.getLog(worldId)
       store.addEntries(log)
       setLoaded(true)
+
+      // Auto-generate opening narration if no story entries
+      if (log.length === 0) {
+        store.setProcessing(true)
+        try {
+          const openingEntry = await window.api.game.start(worldId)
+          if (openingEntry) {
+            store.addEntries([openingEntry])
+          }
+        } catch { /* silent - game still playable without auto-narration */ }
+        finally { store.setProcessing(false) }
+      }
     }
     loadGame()
   }, [worldId])
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [store.entries])
+
+  useEffect(() => {
+    if (!isDragging) return
+    const handleMouseMove = (e: MouseEvent) => {
+      const container = dividerRef.current?.parentElement
+      if (!container) return
+      const rect = container.getBoundingClientRect()
+      const w = rect.right - e.clientX
+      setPanelWidth(Math.max(200, Math.min(500, w)))
+    }
+    const handleMouseUp = () => setIsDragging(false)
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isDragging])
   useEffect(() => { if (loaded) { setTimeout(() => inputRef.current?.focus(), 100) } }, [loaded])
 
   const autoPlayDialogues = useCallback(async (entries: StoryEntry[]) => {
@@ -181,7 +215,14 @@ export default function GamePage() {
         </div>
         <div className="flex items-center gap-2">
           {/* Auto-play voice toggle */}
-          {hasVoiceConfig && (
+          {hasImageConfig && (
+              <button onClick={handleManualImageGen}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-sm transition-colors text-game-muted hover:text-game-text hover:bg-game-panel/80"
+                title="Generate scene">
+                {'\uD83C\uDFB2'}
+              </button>
+            )}
+            {hasVoiceConfig && (
             <button
               onClick={() => updateSettings({ autoPlayVoice: !settings.autoPlayVoice })}
               className={'w-8 h-8 rounded-lg flex items-center justify-center text-sm transition-colors ' + (settings.autoPlayVoice ? 'bg-game-highlight/20 text-game-highlight' : 'bg-game-panel/80 text-game-muted hover:text-game-text')}
@@ -217,10 +258,11 @@ export default function GamePage() {
       <div className="flex-1 flex overflow-hidden">
         {/* Left: Chat */}
         <div className="flex-1 flex flex-col min-w-0">
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto px-8 py-6">
+            <div className="max-w-3xl mx-auto w-full space-y-4">
             {store.entries.length === 0 && (
-              <div className="flex items-center justify-center h-full">
-                <p className="text-game-muted text-sm">{world.config.initialScene || 'The story begins...'}</p>
+              <div className="flex items-center justify-center h-full max-w-2xl mx-auto">
+                <p className="text-game-muted text-sm text-center leading-relaxed">{world.config.initialScene || 'The story begins...'}</p>
               </div>
             )}
             {store.entries.map((entry) => (
@@ -247,6 +289,7 @@ export default function GamePage() {
                 </div>
               </div>
             )}
+            </div>
             <div ref={chatEndRef} />
           </div>
 
@@ -267,13 +310,13 @@ export default function GamePage() {
           )}
 
           {/* Input */}
-          <div className="p-4 border-t border-white/[0.07]">
-            <div className="flex gap-3">
-              <button onClick={handleManualImageGen} disabled={!hasImageConfig}
+          <div className="px-8 py-4 border-t border-white/[0.07]">
+            <div className="flex gap-3 max-w-4xl mx-auto px-2">
+              {hasImageConfig && <button onClick={handleManualImageGen}
                 className="w-10 h-10 rounded-xl bg-game-panel/80 border border-white/[0.07] flex items-center justify-center text-game-muted hover:text-game-text hover:border-game-highlight/30 disabled:opacity-30 transition-colors shrink-0"
                 title="Generate scene">
                 {'\uD83C\uDFB2'}
-              </button>
+              </button>}
               <textarea
                 ref={inputRef}
                 value={playerInput}
@@ -295,9 +338,20 @@ export default function GamePage() {
         {/* GM Panel */}
         {showGMPanel && worldId && <GMPanel worldId={worldId} onClose={() => setShowGMPanel(false)} />}
 
+        {/* Divider */}
+        {hasImageConfig && (
+          <div
+            ref={dividerRef}
+            onMouseDown={() => setIsDragging(true)}
+            className="w-2 shrink-0 bg-white/[0.03] hover:bg-game-highlight/50 cursor-col-resize transition-colors duration-150 relative group divider-handle"
+          >
+            <div className="absolute inset-y-0 -left-1 -right-1" />
+          </div>
+        )}
+
         {/* Right: Scene Panel */}
         {hasImageConfig && (
-          <div className="w-80 shrink-0 border-l border-white/[0.07] bg-game-panel/30 flex flex-col">
+          <div style={{ width: panelWidth }} className="shrink-0 border-l border-white/[0.07] bg-game-panel/30 flex flex-col transition-[width] duration-75">
             <div className="flex-1 flex items-center justify-center p-6 overflow-hidden">
               {store.isGeneratingImage ? (
                 <div className="text-center text-game-muted"><div className="text-5xl mb-4 generating-pulse">{'\uD83C\uDFA8'}</div><p className="text-sm">{t('game.drawing')}</p></div>
@@ -362,7 +416,7 @@ function ChatBubble({
   if (isNarration) {
     return (
       <div className="chat-bubble-enter flex justify-center group">
-        <div className="max-w-xl px-6 py-3 rounded-2xl bg-white/[0.03] border border-white/[0.05] text-center relative">
+        <div className="max-w-2xl px-6 py-3 rounded-2xl bg-white/[0.03] border border-white/[0.05] text-center relative">
           <p className="text-sm text-game-muted italic leading-relaxed">{entry.content}</p>
           <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
             {onDeleteEntry && <button onClick={() => onDeleteEntry(entry.id)} className="text-xs text-red-400/50 hover:text-red-400">{'\u2715'}</button>}
@@ -386,8 +440,8 @@ function ChatBubble({
   }
 
   return (
-    <div className={'chat-bubble-enter flex ' + (isPlayer ? 'justify-end' : 'justify-start')}>
-      <div className={'flex gap-2.5 max-w-[70%] ' + (isPlayer ? 'flex-row-reverse' : '')}>
+    <div className={'chat-bubble-enter flex ' + (isPlayer ? 'justify-end pr-1' : 'justify-start pl-1')}>
+      <div className={'flex gap-2.5 max-w-[60%] ' + (isPlayer ? 'flex-row-reverse' : '')}>
         <button
           onClick={(e) => { const rect = (e.target as HTMLElement).getBoundingClientRect(); onAvatarClick?.(entry, characters, { x: rect.left, y: rect.bottom + 8 }) }}
           className={'w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 shadow-lg ' + (isPlayer ? 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-indigo-500/25' : 'bg-game-panel text-game-muted ring-1 ring-white/[0.10]')}>

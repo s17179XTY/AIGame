@@ -21,12 +21,15 @@ const api = {
     delete: (id: string) => ipcRenderer.invoke('character:delete', id),
     generateAvatar: (characterId: string) => ipcRenderer.invoke('character:generate-avatar', characterId),
     uploadImage: (characterId: string, sourcePath: string) => ipcRenderer.invoke('character:upload-image', characterId, sourcePath),
+    listGlobal: () => ipcRenderer.invoke('character:list-global'),
+    assignToWorld: (characterId: string, worldId: string) => ipcRenderer.invoke('character:assign-world', characterId, worldId),
   },
 
   // Game
   game: {
     sendAction: (action: any) => ipcRenderer.invoke('game:action', action),
     sendGMCommand: (worldId: string, command: string) => ipcRenderer.invoke('game:gm-action', worldId, command),
+    start: (worldId: string) => ipcRenderer.invoke('game:start', worldId),
   },
 
   // Image

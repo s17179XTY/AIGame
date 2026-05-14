@@ -40,8 +40,14 @@ export async function processGameAction(action: GameAction): Promise<GameRespons
   const player = getPlayerCharacter(action.worldId)
   if (!player) throw new Error('Player character not found')
 
+  // Detect free action mode (only explicit free mode)
+  const isFreeAction = action.actionType === 'free-action'
+
+  // Parse player input for mixed action/speech
+  const parsedInput = parsePlayerInput(action.playerInput)
+
   // Build the prompt
-  const messages = buildPrompt(world, worldState, characters, player, action.playerInput)
+  const messages = buildPrompt(world, worldState, characters, player, parsedInput, action.actionType, isFreeAction)
 
   // Call LLM
   const llmProvider = createLLMProvider(config)
@@ -80,7 +86,7 @@ export async function processGameAction(action: GameAction): Promise<GameRespons
   }
 
   // Parse response
-  const output = parseLLMOutput(response.text)
+  const output = parseLLMOutput(response.text, isFreeAction)
 
   // Process state updates
   processStateUpdate(action.worldId, worldState, output.stateUpdate, characters)
@@ -104,12 +110,32 @@ export async function processGameAction(action: GameAction): Promise<GameRespons
   }
 }
 
+
+/** Parse player input to separate parenthesized actions from speech */
+function parsePlayerInput(input: string): { actionPart: string; speechPart: string } {
+  const actionParts: string[] = []
+  let speechText = input
+
+  // Extract all (...), （...）, and 〈...〉 blocks as actions
+  let match
+  while ((match = /[（(〈]([^）)〉]+)[）)〉]/.exec(speechText)) !== null) {
+    actionParts.push(match[1].trim())
+    speechText = speechText.replace(match[0], '')
+  }
+
+  return {
+    actionPart: actionParts.join('；'),
+    speechPart: speechText.trim(),
+  }
+}
 function buildPrompt(
   world: World,
   worldState: WorldState,
   characters: Character[],
   player: Character,
-  playerInput: string
+  parsedInput: { actionPart: string; speechPart: string },
+  actionType?: string,
+  isFreeAction?: boolean
 ): LLMMessage[] {
   const characterListText = characters
     .map(
@@ -191,9 +217,12 @@ ${recentEventsText || '尚無記錄'}
 
 ## 重要規則
 1. 嚴格使用角色 ID 作為 speakerId
-2. 每個回應必須包�?narration 和至少一�?dialogue
-3. 對話要生動、自然，反映角色性格與當前情�?4. 場景變化僅在故事確實轉移到新地點時觸�?5. imageTrigger.shouldGenerate 僅在場景或重要行為發生顯著變化時設為 true
-6. 若故事自然需要引入新角色，請�?newCharacters 陣列中填寫該角色的完整設�?7. 確保所有輸出一致且連貫，不與既有世界設定矛盾`
+2. ${isFreeAction ? '這是自由模式。玩家正在進行純動作/敘述，並非與任何人對話。你應該：\\n   - 以旁白身分敘述場景變化、環境、玩家的感受\\n   - 若玩家移動到新地點，更新 stateUpdate.newScene\\n   - **嚴禁**生成任何 NPC 的 dialogue，將 dialogues 設為空陣列 []\\n   - 不要讓任何角色對玩家說話' : '玩家輸入中，以括號（或（）標記的部分是動作（非對話），非括號部分才是對話或發言。即使玩家執行動作（如離開場景），NPC 角色仍應根據情境回應對話。你必須在 dialogues 陣列中輸出 NPC 的發言。'}
+3. 對話要生動、自然，反映角色性格與當前情緒
+4. 場景變化僅在故事確實轉移到新地點時觸發
+5. imageTrigger.shouldGenerate 僅在場景或重要行為發生顯著變化時設為 true
+6. 若故事自然需要引入新角色，請在 newCharacters 陣列中填寫該角色的完整設定
+7. 確保所有輸出一致且連貫，不與既有世界設定矛盾`
 
   const messages: LLMMessage[] = [
     { role: 'system', content: systemPrompt },
@@ -222,16 +251,20 @@ ${recentEventsText || '尚無記錄'}
     }
   }
 
-  // Player input
+  // Player input - formatted with parsed action/speech
+  const actionClause = parsedInput.actionPart ? `動作: ${parsedInput.actionPart}` : ''
+  const speechClause = parsedInput.speechPart ? `對話: ${parsedInput.speechPart}` : ''
+  const separator = actionClause && speechClause ? '，' : ''
+  const content = `玩家 ${player.name} - ${actionClause}${separator}${speechClause}`
   messages.push({
     role: 'user',
-    content: `玩家 ${player.name} 的動�?對話: ${playerInput}`,
+    content,
   })
 
   return messages
 }
 
-function parseLLMOutput(text: string): StructuredLLMOutput {
+function parseLLMOutput(text: string, isFreeAction?: boolean): StructuredLLMOutput {
   try {
     // Try to extract JSON from the response
     let jsonStr = text.trim()
@@ -250,9 +283,10 @@ function parseLLMOutput(text: string): StructuredLLMOutput {
 
     const parsed = JSON.parse(jsonStr) as StructuredLLMOutput
 
+    const dialogues = isFreeAction ? [] : (Array.isArray(parsed.dialogues) ? parsed.dialogues : [])
     return {
       narration: parsed.narration || '',
-      dialogues: Array.isArray(parsed.dialogues) ? parsed.dialogues : [],
+      dialogues,
       stateUpdate: parsed.stateUpdate || {
         sceneChanged: false,
         timeAdvanced: '',
@@ -469,6 +503,215 @@ function createStoryEntries(
   }
 
   return entries
+}
+
+
+export async function generateOpeningNarration(worldId: string): Promise<StoryEntry | null> {
+  const config = getActiveConfig()
+  if (!config) throw new Error('No active LLM config set')
+  const world = getWorld(worldId)
+  if (!world) throw new Error('World not found')
+
+  const worldState = getWorldState(worldId)
+  if (!worldState) throw new Error('World state not found')
+
+  const characters = listCharacters(worldId)
+  const player = getPlayerCharacter(worldId)
+
+  const charListText = characters
+    .map(
+      (c) =>
+        `- ${c.name} (ID: ${c.id}): ${c.gender}, ${c.age}歲, ${c.personality}, 外觀: ${c.appearance}${c.isPlayer ? ' [玩家角色]' : ''}${c.nickname ? ` (小名: ${c.nickname})` : ''}`
+    )
+    .join('\n')
+
+    const sysPrompt = `你是一個互動敘事遊戲的 AI 遊戲主持人 (Game Master)。
+
+## 世界設定
+- 世界名稱: ${world.config.name}
+- 世界觀: ${world.config.worldview}
+- 世界規則: ${world.config.rules}
+${world.config.systemPrompt ? '## 系統提示詞\n' + world.config.systemPrompt : ''}
+
+## 初始場景
+- 場景: ${worldState.scene}
+- 時間: ${worldState.time}
+- 天氣: ${worldState.weather}
+
+## 角色列表
+${charListText}
+
+請以旁白的身分，為這個故事寫一段精彩的開場敘述。描述場景、氛圍、主角的登場，以及故事的開端。不需要包含任何角色的對話，只需要純粹的場景敘述。用 JSON 格式輸出：
+
+` +
+  '```json\n{\n  "narration": "開場敘述文字"\n}\n```\n\n只輸出 JSON，不要有任何其他文字。'
+
+  const messages: LLMMessage[] = [
+    { role: 'system', content: sysPrompt },
+  ]
+
+  const llmProvider = createLLMProvider(config)
+  let response: any
+  try {
+    response = await llmProvider.chat(messages, {
+      model: config.model,
+      temperature: 0.9,
+      maxTokens: config.maxTokens,
+      topP: config.topP,
+      frequencyPenalty: config.frequencyPenalty,
+      presencePenalty: config.presencePenalty,
+    })
+  } catch (err: any) {
+    console.error('Failed to generate opening narration:', err.message)
+    return null
+  }
+
+  // Parse response
+  let narration: string
+  try {
+    const text = response.text || ''
+    let jsonStr = text.trim()
+    const firstBrace = jsonStr.indexOf('{')
+    const lastBrace = jsonStr.lastIndexOf('}')
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      jsonStr = jsonStr.slice(firstBrace, lastBrace + 1)
+    }
+    const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/)
+    if (jsonMatch) jsonStr = jsonMatch[1].trim()
+    const parsed = JSON.parse(jsonStr)
+    narration = parsed.narration || response.text
+  } catch {
+    narration = response.text || worldState.scene
+  }
+
+  // Create story entry
+  const db = getDatabase()
+  const id = randomUUID()
+  const now = new Date().toISOString()
+
+  db.prepare(
+    `INSERT INTO story_log (id, world_id, sequence, speaker_id, speaker_name, content, type, emotion, image_trigger_context, image_path, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(id, worldId, 1, null, '旁白', narration, 'narration', '', null, null, now)
+
+  return {
+    id,
+    worldId,
+    sequence: 1,
+    speakerId: null,
+    speakerName: '旁白',
+    content: narration,
+    type: 'narration',
+    emotion: '',
+    imageTriggerContext: null,
+    imagePath: null,
+    createdAt: now,
+  }
+}
+
+export async function processGMCommand(worldId: string, command: string): Promise<GMCommandResponse> {
+  const config = getActiveConfig();
+  if (!config) throw new Error("No active LLM config set");
+  const world = getWorld(worldId);
+  if (!world) throw new Error("World not found");
+  const worldState = getWorldState(worldId);
+  if (!worldState) throw new Error("World state not found");
+  const characters = listCharacters(worldId);
+
+  const charListText = characters
+    .map((c) => `- ${c.name} (ID: ${c.id}): ${c.gender}, ${c.age}y, ${c.personality}${c.isPlayer ? " [Player]" : ""}`)
+    .join("\n");
+
+  const sysPrompt = `You are a Game Master assistant for an interactive narrative game. The user is the Game Master who can modify the game world using natural language commands.
+
+## Current World
+- Name: ${world.config.name}
+- Worldview: ${world.config.worldview}
+- Rules: ${world.config.rules}
+- System Prompt: ${world.config.systemPrompt || "None"}
+- Initial Scene: ${world.config.initialScene || "None"}
+
+## Current State
+- Scene: ${worldState.scene}
+- Time: ${worldState.time}
+- Weather: ${worldState.weather}
+
+## Characters
+${charListText}
+
+The GM wants to execute this command: "${command}"
+
+You are a GM command interpreter. Analyze the GM's command and respond with JSON only (no markdown, no code blocks).
+The JSON format:
+{
+  "message": "Human-readable summary of what was changed",
+  "worldConfigPatch": null or { name?, worldview?, rules?, systemPrompt?, initialScene? },
+  "characterPatches": null or [{ id: "char-id", updates: { name?, nickname?, gender?, age?, appearance?, personality?, extraPrompt? } }],
+  "newScene": null or string,
+  "newTime": null or string,
+  "newWeather": null or string
+}
+Only include fields that the GM wants to change. Use existing character IDs from the list above.`;
+
+  const messages: LLMMessage[] = [
+    { role: "system", content: sysPrompt },
+    { role: "user", content: command },
+  ];
+
+  const llmProvider = createLLMProvider(config);
+  let response: any;
+  try {
+    response = await llmProvider.chat(messages, {
+      model: config.model,
+      temperature: 0.7,
+      maxTokens: config.maxTokens,
+      topP: config.topP,
+      frequencyPenalty: config.frequencyPenalty,
+      presencePenalty: config.presencePenalty,
+    });
+  } catch (err: any) {
+    return { success: false, message: "LLM call failed: " + (err.message || "Unknown error") };
+  }
+
+  let parsed: any;
+  try {
+    const text = response.text || "";
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const jsonStr = jsonMatch ? jsonMatch[0] : text;
+    parsed = JSON.parse(jsonStr);
+  } catch {
+    return { success: false, message: "Failed to parse LLM response: " + (response.text?.slice(0, 200) || "empty") };
+  }
+
+  if (parsed.worldConfigPatch && Object.keys(parsed.worldConfigPatch).length > 0) {
+    updateWorld(worldId, parsed.worldConfigPatch);
+  }
+
+  if (parsed.characterPatches && Array.isArray(parsed.characterPatches)) {
+    for (const patch of parsed.characterPatches) {
+      if (patch.id && patch.updates) {
+        updateCharacterInDb(patch.id, patch.updates);
+      }
+    }
+  }
+
+  const stateUpdates: any = {};
+  if (parsed.newScene) stateUpdates.scene = parsed.newScene;
+  if (parsed.newTime) stateUpdates.time = parsed.newTime;
+  if (parsed.newWeather) stateUpdates.weather = parsed.newWeather;
+  if (Object.keys(stateUpdates).length > 0) {
+    updateWorldState(worldId, stateUpdates);
+  }
+
+  return {
+    success: true,
+    message: parsed.message || "Done.",
+    worldConfigPatch: parsed.worldConfigPatch || undefined,
+    characterPatches: parsed.characterPatches || undefined,
+    newScene: parsed.newScene || undefined,
+    newTime: parsed.newTime || undefined,
+    newWeather: parsed.newWeather || undefined,
+  };
 }
 
 export function getStoryLog(

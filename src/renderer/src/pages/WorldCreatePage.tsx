@@ -2,7 +2,7 @@
 import { useAppStore } from '../stores/appStore'
 import { useI18n } from '../i18n'
 import { useToast } from '../components/ToastProvider'
-import type { WorldConfig, CharacterConfig } from '../../../main/services/types'
+import type { WorldConfig, CharacterConfig, Character } from '../../../main/services/types'
 
 export default function WorldCreatePage() {
   const { t } = useI18n()
@@ -29,6 +29,8 @@ export default function WorldCreatePage() {
 
   const [importantChars, setImportantChars] = useState<CharacterConfig[]>([])
   const [creating, setCreating] = useState(false)
+  const [globalChars, setGlobalChars] = useState<Character[]>([])
+  const [selectedCharIds, setSelectedCharIds] = useState<Set<string>>(new Set())
   const [showCharModal, setShowCharModal] = useState(false)
   const [newChar, setNewChar] = useState<CharacterConfig & { imagePath?: string }>({
     name: '',
@@ -47,6 +49,20 @@ export default function WorldCreatePage() {
 
   const updatePlayer = <K extends keyof CharacterConfig>(key: K, value: CharacterConfig[K]) => {
     setPlayerConfig((p) => ({ ...p, [key]: value }))
+  }
+
+    // Load global character templates
+  React.useEffect(() => {
+    window.api.character.listGlobal().then(setGlobalChars)
+  }, [])
+
+  const toggleCharSelection = (id: string) => {
+    setSelectedCharIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
 
   const addImportantChar = () => {
@@ -112,6 +128,11 @@ export default function WorldCreatePage() {
         }
       }
 
+      // Assign selected global characters to world
+      for (const charId of selectedCharIds) {
+        await window.api.character.assignToWorld(charId, world.id)
+      }
+
       selectWorld(world.id)
       setPage('game')
     } catch (err: any) {
@@ -124,7 +145,7 @@ export default function WorldCreatePage() {
   const inputClass =
     'w-full bg-white/[0.05] border border-white/[0.10] rounded-xl px-4 py-2.5 text-game-text placeholder-game-muted/40 focus:border-indigo-500/40 focus:bg-white/[0.07] outline-none transition-all duration-200'
   const textareaClass =
-    'w-full bg-white/[0.05] border border-white/[0.10] rounded-xl px-4 py-2.5 text-game-text placeholder-game-muted/40 focus:border-indigo-500/40 focus:bg-white/[0.07] outline-none transition-all duration-200 resize-none'
+    'w-full bg-white/[0.05] border border-white/[0.10] rounded-xl px-4 py-2.5 text-game-text placeholder-game-muted/40 focus:border-indigo-500/40 focus:bg-white/[0.07] outline-none transition-all duration-200 resize-y'
 
   return (
     <div className="h-screen flex flex-col bg-game-bg">
@@ -215,6 +236,37 @@ export default function WorldCreatePage() {
               <h2 className="text-lg font-semibold text-game-text">主角設定（你）</h2>
             </div>
             <CharacterForm config={playerConfig} update={updatePlayer} inputClass={inputClass} textareaClass={textareaClass} />
+          </section>
+
+          {/* Select from global character templates */}
+          <section className="rounded-2xl bg-game-panel/60 border border-white/[0.07] p-6 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xl">📋</span>
+              <h2 className="text-lg font-semibold text-game-text">從角色模板選取</h2>
+            </div>
+            {globalChars.length === 0 ? (
+              <p className="text-sm text-game-muted py-2">尚無角色模板，請先在首頁建立，或手動添加下方重要角色</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {globalChars.map((char) => (
+                  <button
+                    key={char.id}
+                    onClick={() => toggleCharSelection(char.id)}
+                    className={`px-3 py-2 rounded-xl text-xs border transition-all ${
+                      selectedCharIds.has(char.id)
+                        ? 'border-game-highlight bg-game-highlight/10 text-game-highlight'
+                        : 'border-white/[0.07] text-game-muted hover:border-game-highlight/30'
+                    }`}
+                  >
+                    {char.name}{char.nickname ? ` (${char.nickname})` : ''}
+                    <span className="ml-1 opacity-50">{char.gender} {char.age}y</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {selectedCharIds.size > 0 && (
+              <p className="text-xs text-game-highlight mt-3">已選取 {selectedCharIds.size} 個角色</p>
+            )}
           </section>
 
           {/* Important Characters */}

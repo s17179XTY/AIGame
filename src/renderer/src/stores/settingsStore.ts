@@ -6,6 +6,8 @@ const DEFAULT_SETTINGS: AppSettingsType = {
   activeImageConfigId: null,
   activeVoiceConfigId: null,
   imageFrequency: 'standard',
+  autoPlayVoice: true,
+  language: 'zh-TW',
 }
 
 interface SettingsStore {
@@ -50,6 +52,10 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   loadSettings: async () => {
     try {
       const settings = await window.api.settings.get()
+      // Fallback: coerce empty strings to null for config IDs
+      if (settings.activeLlmConfigId === '') settings.activeLlmConfigId = null
+      if (settings.activeImageConfigId === '') settings.activeImageConfigId = null
+      if (settings.activeVoiceConfigId === '') settings.activeVoiceConfigId = null
       set({ settings, loaded: true })
     } catch {
       set({ loaded: true })

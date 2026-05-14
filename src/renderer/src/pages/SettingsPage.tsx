@@ -271,9 +271,9 @@ export default function SettingsPage() {
             <select value={form.language}
               onChange={(e) => update('language', e.target.value as 'zh-TW' | 'en' | 'ja')}
               className={inputClass}>
-              <option value="zh-TW">\u7E41\u9AD4\u4E2D\u6587</option>
+              <option value="zh-TW">繁體中文</option>
               <option value="en">English</option>
-              <option value="ja">\u65E5\u672C\u8A9E</option>
+              <option value="ja">日本語</option>
             </select>
           </section>
 

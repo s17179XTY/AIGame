@@ -53,6 +53,7 @@ export interface ImageContext {
 
 export interface CharacterConfig {
   name: string
+  nickname?: string
   gender: string
   age: number
   appearance: string
@@ -65,6 +66,7 @@ export interface Character {
   id: string
   worldId: string
   name: string
+  nickname?: string
   gender: string
   age: number
   appearance: string
@@ -324,6 +326,7 @@ export interface GameAction {
 }
 
 export interface GMCommandResponse {
+  success: boolean
   message: string
   worldConfigPatch?: Partial<WorldConfig>
   characterPatches?: Array<{ id: string; updates: Partial<CharacterConfig> }>
@@ -360,11 +363,14 @@ export const IPC_CHANNELS = {
   CHARACTER_DELETE: 'character:delete',
   CHARACTER_GENERATE_AVATAR: 'character:generate-avatar',
   CHARACTER_UPLOAD_IMAGE: 'character:upload-image',
+  CHARACTER_LIST_GLOBAL: 'character:list-global',
+  CHARACTER_ASSIGN_WORLD: 'character:assign-world',
 
   // Game
   GAME_ACTION: 'game:action',
   GAME_NEW_CHARACTER_CONFIRM: 'game:new-character-confirm',
   GAME_GM_ACTION: 'game:gm-action',
+  GAME_START: 'game:start',
 
   // Image
   IMAGE_GENERATE_SCENE: 'image:generate-scene',
