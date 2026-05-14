@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai'
-import { LLMMessage, LLMOptions, LLMResponse } from '../../types'
+import { LLMMessage, LLMOptions, LLMResponse } from '../types'
 import { LLMProvider } from './index'
 
 export class GeminiProvider implements LLMProvider {
@@ -14,19 +14,18 @@ export class GeminiProvider implements LLMProvider {
   private getModel(): GenerativeModel {
     if (!this.model) {
       const genAI = new GoogleGenerativeAI(this.apiKey)
-      this.model = genAI.getGenerativeModel({ model: this.modelName })
+      this.model = genAI.getGenerativeModel({ model: this.modelName, ...(this.baseUrl ? { baseUrl: this.baseUrl } : {}) })
     }
     return this.model
   }
 
   async chat(messages: LLMMessage[], options: LLMOptions): Promise<LLMResponse> {
-    const model = this.getModel()
-    const genAI = this.baseUrl
-      ? new GoogleGenerativeAI(this.apiKey)
-      : new GoogleGenerativeAI(this.apiKey)
-    const modelWithOptions = this.modelName !== options.model
-      ? genAI.getGenerativeModel({ model: options.model })
-      : model
+    let model = this.getModel()
+
+    if (this.modelName !== options.model) {
+      const genAI = new GoogleGenerativeAI(this.apiKey)
+      model = genAI.getGenerativeModel({ model: options.model, ...(this.baseUrl ? { baseUrl: this.baseUrl } : {}) })
+    }
 
     const systemMessages = messages.filter((m) => m.role === 'system')
     const conversationMessages = messages.filter((m) => m.role !== 'system')
@@ -40,7 +39,7 @@ export class GeminiProvider implements LLMProvider {
 
     const lastMessage = conversationMessages[conversationMessages.length - 1]
 
-    const chat = modelWithOptions.startChat({
+    const chat = model.startChat({
       history: history.length > 0 ? history : undefined,
       systemInstruction: systemPrompt || undefined,
     })

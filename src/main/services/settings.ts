@@ -41,11 +41,18 @@ export async function testLLMConnection(provider: string, apiKey: string, model:
     if (provider === 'openai') {
       const OpenAI = (await import('openai')).default
       const client = new OpenAI({ apiKey, ...(baseUrl ? { baseURL: baseUrl } : {}) })
-      await client.chat.completions.create({
+      const testResponse = await client.chat.completions.create({
         model: useModel,
         messages: [{ role: 'user', content: 'Hi' }],
         max_tokens: 5,
       })
+      if (!testResponse || !Array.isArray(testResponse.choices) || testResponse.choices.length === 0 || !testResponse.choices[0]?.message?.content) {
+        const isLocal = baseUrl && (baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1') || baseUrl.includes('192.168.'))
+        if (isLocal) {
+          return { success: false, message: '伺服器回應異常。請確認 apiBaseUrl 是否包含 /v1（例如 http://localhost:1234/v1）' }
+        }
+        return { success: false, message: '伺服器回應異常，未收到有效內容' }
+      }
       return { success: true, message: 'OpenAI 連線成功' }
     }
 
@@ -62,8 +69,8 @@ export async function testLLMConnection(provider: string, apiKey: string, model:
 
     if (provider === 'gemini') {
       const { GoogleGenerativeAI } = await import('@google/generative-ai')
-      const genAI = new GoogleGenerativeAI(apiKey, baseUrl ? { baseUrl } : undefined)
-      const geminiModel = genAI.getGenerativeModel({ model: useModel })
+      const genAI = new GoogleGenerativeAI(apiKey)
+      const geminiModel = genAI.getGenerativeModel({ model: useModel, ...(baseUrl ? { baseUrl } : {}) })
       await geminiModel.generateContent('Hi')
       return { success: true, message: 'Gemini 連線成功' }
     }

@@ -1,4 +1,4 @@
-import { ImageOptions, ImageResult } from '../../types'
+import { ImageOptions, ImageResult } from '../types'
 
 export interface ImageProvider {
   generate(prompt: string, options: ImageOptions): Promise<ImageResult>

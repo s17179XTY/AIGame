@@ -1,5 +1,5 @@
 import OpenAI from 'openai'
-import { ImageOptions, ImageResult } from '../../types'
+import { ImageOptions, ImageResult } from '../types'
 import { ImageProvider } from './index'
 import fs from 'fs'
 import path from 'path'

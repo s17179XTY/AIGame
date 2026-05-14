@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { LLMMessage, LLMOptions, LLMResponse } from '../../types'
+import { LLMMessage, LLMOptions, LLMResponse } from '../types'
 import { LLMProvider } from './index'
 
 export class AnthropicProvider implements LLMProvider {

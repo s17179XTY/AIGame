@@ -39,12 +39,33 @@ export async function processGameAction(action: GameAction): Promise<GameRespons
 
   // Call LLM
   const llmProvider = getLLMProvider(settings)
-  const response = await llmProvider.chat(messages, {
-    model: settings.llmModel,
-    temperature: 0.8,
-    maxTokens: 4096,
-    responseFormat: 'json_object',
-  })
+  const isLocalModel = settings.apiBaseUrl && (
+    settings.apiBaseUrl.includes('localhost') ||
+    settings.apiBaseUrl.includes('127.0.0.1') ||
+    settings.apiBaseUrl.includes('192.168.')
+  )
+
+  let response: any
+  try {
+    response = await llmProvider.chat(messages, {
+      model: settings.llmModel,
+      temperature: 0.8,
+      maxTokens: 4096,
+      responseFormat: isLocalModel ? undefined : 'json_object',
+    })
+  } catch (err: any) {
+    const msg = err?.message ?? ''
+    // If json_object caused the error, retry without it
+    if (!isLocalModel && (msg.includes('response_format') || msg.includes('json_object'))) {
+      response = await llmProvider.chat(messages, {
+        model: settings.llmModel,
+        temperature: 0.8,
+        maxTokens: 4096,
+      })
+    } else {
+      throw err
+    }
+  }
 
   // Parse response
   const output = parseLLMOutput(response.text)
@@ -169,7 +190,7 @@ ${recentEventsText || '尚無記錄'}
   const db = getDatabase()
   const recentLog = db
     .prepare('SELECT * FROM story_log WHERE world_id = ? ORDER BY sequence DESC LIMIT 10')
-    .all(action.worldId) as Record<string, unknown>[]
+    .all(world.id) as Record<string, unknown>[]
 
   if (recentLog.length > 0) {
     const contextEntries = recentLog.reverse()
@@ -202,7 +223,13 @@ function parseLLMOutput(text: string): StructuredLLMOutput {
     // Try to extract JSON from the response
     let jsonStr = text.trim()
 
-    // Remove markdown code blocks if present
+    // Strategy 1: Try to find JSON object by locating { ... }
+    const firstBrace = jsonStr.indexOf('{')
+    const lastBrace = jsonStr.lastIndexOf('}')
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      jsonStr = jsonStr.slice(firstBrace, lastBrace + 1)
+    }
+    // Strategy 2: Remove markdown code blocks if present
     const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/)
     if (jsonMatch) {
       jsonStr = jsonMatch[1].trim()

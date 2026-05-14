@@ -1,4 +1,4 @@
-import { LLMMessage, LLMOptions, LLMResponse, AppSettings } from '../../types'
+import { LLMMessage, LLMOptions, LLMResponse, AppSettings } from '../types'
 import { OpenAIProvider } from './openai'
 import { AnthropicProvider } from './anthropic'
 import { GeminiProvider } from './gemini'
