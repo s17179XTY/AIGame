@@ -1,6 +1,6 @@
 # AI Novel Game — AGENTS.md（AI 開發指南）
 
-> 最後更新：2026-05-14 | 版本：1.0.0
+> 最後更新：2026-05-14 | 版本：1.1.0-dev
 
 ## 專案概述
 
@@ -62,7 +62,7 @@ AIGame/
   src/
     main/                       # ── 主進程 ──
       index.ts                  # BrowserWindow（1400x900, min 1024x700, 背景 #1a1a2e）
-      database.ts               # SQLite 初始化、5 張表 schema、WAL、foreign keys
+      database.ts               # SQLite 初始化、8 張表 schema、WAL、foreign keys
       ipc-handlers.ts           # 所有 ipcMain.handle 註冊（16 個通道）
       services/
         types.ts                # ⭐ 所有型別、介面、常數（專案的型別唯一來源）
@@ -80,7 +80,7 @@ AIGame/
           openai.ts             # DALL-E 3（https 下載圖片，不支援 seed）
           stability.ts          # Stability AI v2beta（FormData + fetch + base64 解碼）
     preload/
-      index.ts                  # contextBridge.exposeInMainWorld('api', {...})，6 個分類
+      index.ts                  # contextBridge.exposeInMainWorld('api', {...})，8 個分類
     renderer/
       index.html                # lang=zh-TW，Google Fonts Inter preconnect，<div id="root">
       src/
@@ -123,7 +123,7 @@ AIGame/
 │ Preload (Node.js 環境，有限 API)                       │
 │                                                       │
 │  src/preload/index.ts                                 │
-│  6 個分類: world / character / game / image /          │
+│  8 個分類: world / character / game / image /          │
 │            settings / story                           │
 │  每個方法呼叫 ipcRenderer.invoke(channel, ...args)     │
 │                                                       │
@@ -133,7 +133,7 @@ AIGame/
 │ Main Process (Node.js 完整環境)                        │
 │                                                       │
 │  index.ts: BrowserWindow 生命週期                      │
-│  ipc-handlers.ts: 16 個 IPC 路由                       │
+│  ipc-handlers.ts: ~38 個 IPC 路由                       │
 │  services/: 所有業務邏輯                                │
 │  database.ts: better-sqlite3 (WAL, FK)                │
 │                                                       │
@@ -172,10 +172,80 @@ App.tsx 首次載入時呼叫 `loadSettings()`，顯示 loading spinner，載入
 | 表 | 用途 | 欄位 |
 |---|------|------|
 | `worlds` | 世界定義 | `id TEXT PK`, `name`, `config TEXT`(JSON), `created_at`, `updated_at` |
-| `characters` | 角色 | `id TEXT PK`, `world_id FK`, `name`, `gender`, `age INT`, `appearance`, `personality`, `extra_prompt`, `is_player INT`, `is_dynamic INT`, `is_locked INT`, `visual_anchor TEXT`(JSON), `created_at` |
+| `characters` | 角色 | `id TEXT PK`, `world_id FK`, `name`, `gender`, `age INT`, `appearance`, `personality`, `extra_prompt`, `is_player INT`, `is_dynamic INT`, `is_locked INT`, `visual_anchor TEXT`(JSON), 🆕 `image_path TEXT`, `created_at` |
 | `world_state` | 即時世界狀態 | `id TEXT PK`, `world_id UNIQUE FK`, `scene`, `time`, `weather`, `character_emotions TEXT`(JSON), `relationships TEXT`(JSON), `recent_events TEXT`(JSON), `last_image_context TEXT`(JSON), `updated_at` |
 | `story_log` | 故事條目 | `id TEXT PK`, `world_id FK`, `sequence INT`, `speaker_id FK`, `speaker_name`, `content`, `type`, `emotion`, `image_trigger_context TEXT`(JSON), `image_path`, `created_at` |
 | `settings` | 應用設定 | `key TEXT PK`, `value TEXT` |
+| 🆕 `llm_configs` | LLM 設定組 | `id TEXT PK`, `name`, `provider`, `model`, `api_key`, `api_base_url`, `temperature`, `max_tokens`, `top_p`, `frequency_penalty`, `presence_penalty`, `created_at`, `updated_at` |
+| 🆕 `image_configs` | 圖片設定組 | `id TEXT PK`, `name`, `provider`, `model`, `api_key`, `api_base_url`, `size`, `quality`, `created_at`, `updated_at` |
+| 🆕 `voice_configs` | 語音設定組 | `id TEXT PK`, `name`, `provider`, `model`, `api_key`, `voice`, `speed`, `created_at`, `updated_at` |
+
+### Settings 表 Key 變更（v1.0.0 → v1.1.0）
+
+| v1.0.0 Key | v1.1.0 Key | 說明 |
+|------------|------------|------|
+| `apiKey` | ❌ 移除 | 改用 `activeLlmConfigId` 指向 `llm_configs` |
+| `llmProvider` | ❌ 移除 | 移至 `llm_configs.provider` |
+| `llmModel` | ❌ 移除 | 移至 `llm_configs.model` |
+| `apiBaseUrl` | ❌ 移除 | 移至 `llm_configs.api_base_url` |
+| `imageProvider` | ❌ 移除 | 改用 `activeImageConfigId` 指向 `image_configs` |
+| `imageModel` | ❌ 移除 | 移至 `image_configs.model` |
+| `stabilityApiKey` | ❌ 移除 | 移至 `image_configs.api_key` |
+| — | 🆕 `activeLlmConfigId` | LLM 設定組 ID |
+| — | 🆕 `activeImageConfigId` | 圖片設定組 ID |
+| — | 🆕 `activeVoiceConfigId` | 語音設定組 ID |
+| — | 🆕 `autoPlayVoice` | 自動朗讀開關（boolean） |
+| — | 🆕 `language` | UI 語言（zh-TW/en/ja） |
+| `imageFrequency` | 保留 | 不變 |
+
+### 🆕 Config 表結構（Phase 1）
+
+**llm_configs**（LLM 設定組）：
+
+| 欄位 | 類型 | 說明 |
+|------|------|------|
+| id | TEXT PK | UUID |
+| name | TEXT | 設定名稱（使用者自訂） |
+| provider | TEXT | openai / anthropic / gemini |
+| model | TEXT | 模型名稱 |
+| api_key | TEXT | API Key |
+| api_base_url | TEXT | API Base URL（可選） |
+| temperature | REAL | 0-2 |
+| max_tokens | INTEGER | 最大 token |
+| top_p | REAL | 0-1 |
+| frequency_penalty | REAL | -2 到 2 |
+| presence_penalty | REAL | -2 到 2 |
+| created_at | TEXT | ISO timestamp |
+| updated_at | TEXT | ISO timestamp |
+
+**image_configs**（圖片生成設定組）：
+
+| 欄位 | 類型 | 說明 |
+|------|------|------|
+| id | TEXT PK | UUID |
+| name | TEXT | 設定名稱 |
+| provider | TEXT | openai（DALL-E）/ stability |
+| model | TEXT | 模型名稱（如 dall-e-3） |
+| api_key | TEXT | API Key |
+| api_base_url | TEXT | API Base URL（可選） |
+| size | TEXT | 尺寸（1024x1024, 1792x1024, 1024x1792） |
+| quality | TEXT | standard / hd |
+| created_at | TEXT | ISO timestamp |
+| updated_at | TEXT | ISO timestamp |
+
+**voice_configs**（語音設定組）：
+
+| 欄位 | 類型 | 說明 |
+|------|------|------|
+| id | TEXT PK | UUID |
+| name | TEXT | 設定名稱 |
+| provider | TEXT | openai（目前僅支援 OpenAI TTS） |
+| model | TEXT | tts-1（fast）/ tts-1-hd（quality） |
+| api_key | TEXT | API Key |
+| voice | TEXT | alloy / echo / fable / onyx / nova / shimmer |
+| speed | REAL | 0.25 - 4.0 |
+| created_at | TEXT | ISO timestamp |
+| updated_at | TEXT | ISO timestamp |
 
 ### 索引
 
@@ -438,30 +508,45 @@ Inter 從 Google Fonts 載入（`index.html` 中 preconnect 優化）。
 
 ## 已知問題清單
 
-### 🔴 嚴重（可能導致資料損壞）
-1. **PowerShell 編碼損毀**：`Get-Content -Raw` + `replace` + `Set-Content` 會破壞 CJK 多位元組字元。必須使用 Node.js `fs.readFileSync/fs.writeFileSync` with `'utf8'`。PowerShell `Out-File -Encoding utf8` 會添加 BOM，應使用 `[System.IO.File]::WriteAllText` 或 Node.js。
+### 🔴 嚴重（影響功能運行）
 
-### 🟡 建置與執行時期
-2. **Electron 33 鎖定**：不可升級到 42+
-3. **better-sqlite3 重編譯**：若出現 NODE_MODULE_VERSION 錯誤，手動 `npx @electron/rebuild -m . -o better-sqlite3`
-4. **Vite 5 / plugin-react v4 鎖定**
-5. **TS6305 錯誤**：`tsc --noEmit -p tsconfig.node.json` 時 `out/` 目錄中的 `.d.ts` 檔案未從原始檔建置（複合專案問題，不影響 electron-vite 建置）
-6. **electron.vite.config.ts TS2769**：`outDir` 屬性不被 electron-vite 型別接受（electron-vite 內部處理，無功能影響）
+1. **getSettings 類型汙染**：`settings.ts:14` 將 DB 字串值直接賦予 settings 物件，導致 `activeImageConfigId` 為 `"null"`（真值字串）而非 `null`。表現為：無圖片/語音設定時面板不隱藏。修復位置：`settingsStore.loadSettings()` 中對 `activeImageConfigId`/`activeVoiceConfigId`/`activeLlmConfigId` 做字串→null 強制轉換，對 `autoPlayVoice` 做字串→boolean 轉換。
 
-### 🟢 功能限制（v1）
-7. **WorldPreviewPage 為 placeholder**：AI 預覽/自動填寫世界設定尚未實作
-8. **API keys 純文字儲存**於 SQLite
-9. **角色關係圖**（force-directed）未實作
-10. **虛擬滾動**未實作（長聊天記錄效能問題）
-11. **語音功能**已完全移除
-12. **無圖片清理**：生成圖片累積在 `userData/images/`
-13. **DALL-E 3 不支援 seed**：角色視覺一致性僅在 Stability AI 有效
-14. **Stability AI v2beta**：API 可能需更新
+2. **Unicode 轉義字面量**：`SettingsPage.tsx:274,276` 中 `\u7E41\u9AD4\u4E2D\u6587` 應為 `繁體中文`，`\u65E5\u672C\u8A9E` 應為 `日本語`。原因：PowerShell `@'...@'` heredoc 將 `\u` 保留為字面量。
+
+### 🟡 中等（功能缺陷）
+
+3. **WorldSettingsModal 硬編碼英文**：全部標籤使用字串字面量（'World Settings', 'Name *', 'Worldview *', 'Gender', 'Age', 'Appearance', 'Personality', 'Image', 'Upload', 'Change', 'Extra Prompt', 'Save Character', 'Player', 'Del'），未使用 i18n `t()`。需補齊 i18n keys。
+
+4. **settingsStore DEFAULT_SETTINGS 不完整**：缺少 `autoPlayVoice: true` 和 `language: 'zh-TW'` 預設值。
+
+5. **Extra Prompt 欄位過小**：`WorldCreatePage.tsx` 和 `WorldSettingsModal.tsx` 中 Extra Prompt 使用 `<input type="text">`，應改為 `<textarea rows={3}>`。
+
+6. **缺少「小名」欄位**：`CharacterConfig`/`Character`、資料庫、character service、WorldCreatePage、WorldSettingsModal 全部缺少可選的 `nickname` 欄位。
+
+7. **部分頁面混用硬編碼中文與 i18n**：`WorldCreatePage.tsx` 局部使用 `t()`，局部直接寫中文（如「初始場景」、「遊戲開始時的場景描述」）。
+
+### 🟢 輕微（體驗改善）
+
+8. **聊天區貼邊過緊**：`GamePage.tsx` 聊天區 `p-4` 應加大並加 `max-w-4xl mx-auto` 居中。
+
+9. **缺少可拖曳分割線**：文字聊天區和圖片面板之間應有可拖曳的分割線調整寬度。
+
+10. **PowerShell 編碼損毀**：`Get-Content -Raw` + `replace` + `Set-Content` 會破壞 CJK 多位元組字元。必須使用 Node.js `fs.readFileSync/fs.writeFileSync` with `'utf8'`。
 
 ### 🔵 LM Studio / 本地模型相容性
-15. **apiBaseUrl 必須包含 `/v1`**：正確 `http://192.168.x.x:port/v1`，不含會回傳空回應
-16. **json_object 格式**：多數本地模型不支援，程式已實作自動偵測（localhost/127.0.0.1/192.168.）+ 自動降級重試
-17. **測試連線假陽性**：LM Studio 對錯誤端點仍回 200，程式已實作回應內容驗證
+
+11. **apiBaseUrl 必須包含 `/v1`**：正確 `http://192.168.x.x:port/v1`，不含會回傳空回應。
+12. **json_object 格式**：多數本地模型不支援，程式已實作自動偵測（localhost/127.0.0.1/192.168.）+ 自動降級重試。
+13. **測試連線假陽性**：LM Studio 對錯誤端點仍回 200，程式已實作回應內容驗證。
+
+### ⚠️ 功能限制（v1.1.0-dev）
+
+14. **WorldPreviewPage 為 placeholder**：AI 預覽/自動填寫世界設定尚未實作。
+15. **API keys 純文字儲存**於 SQLite。
+16. **GM 面板後端待完善**：`processGMCommand` 未實作，目前降級用 `processGameAction`。
+17. **角色關係圖**（force-directed）未實作。
+18. **虛擬滾動**未實作（長聊天記錄效能問題）。
 
 ---
 
@@ -557,6 +642,83 @@ git add <files>
 git commit -m "type: description"
 git push
 ```
+
+
+## 🆕 新增功能模組（Phase 1-3）
+
+### TTS 語音朗讀（Phase 1）
+
+- `services/voice/index.ts`：VoiceProvider 介面 + createVoiceProvider 工廠
+- `services/voice/openai.ts`：OpenAI TTS（tts-1/tts-1-hd），輸出 mp3 到 `userData/audio/`
+- GamePage：NPC 對話氣泡旁顯示 🔉 按鈕，點擊播放
+- **自動朗讀**：設定中開啟後，AI 回應中的 NPC 對話自動依序播放
+- **僅在有 active voice config 時顯示語音 UI**，否則完全隱藏
+- GamePage 頂部有 🔊 自動朗讀開關按鈕
+
+### 圖片 API 卡片化（Phase 1）
+
+- SettingsPage 新增「圖片生成設定」卡片區，與 LLM 設定同樣的 CRUD + ping + set-active 模式
+- `image_configs` 表：provider 支援 openai（DALL-E）/ stability
+- **僅在有 active image config 時顯示圖片生成面板**，否則右側面板和 🎲 按鈕全部隱藏
+
+### 角色圖片（Phase 2）
+
+- 角色可上傳圖片（`character:upload-image`），儲存到 `userData/characters/`
+- WorldCreatePage：新增角色彈出模態框，名稱/性別/年齡必填，支援圖片上傳
+- WorldSettingsModal：角色編輯含圖片更換
+
+### 世界編輯 + 角色列表（Phase 2）
+
+- WorldSettingsModal：雙 Tab（世界設定 / 角色列表）
+- 世界設定 Tab：編輯 WorldConfig 所有欄位
+- 角色列表 Tab：網格顯示所有角色卡片，點擊編輯，支援刪除
+
+### 角色卡片彈窗（Phase 2）
+
+- CharacterCardPopover：聊天中點擊頭像彈出，顯示角色詳細資訊
+
+### GM 面板（Phase 3）
+
+- GMPanel：可摺疊右側面板，輸入 GM 指令修改世界/角色
+- ⚠️ 前端 UI 就緒，後端 `processGMCommand` 待完善（目前降級使用 `processGameAction`）
+
+### 模擬世界 / 自由模式（Phase 3）
+
+- 頂部切換按鈕：對話模式 / 自由模式
+- 自由模式：玩家描述行動（非直接對話），AI 自主推進場景
+- 對話觸發語法：`(正與XXX說話) 內容` → 解析為對特定角色的對話
+- `(結束對話)` → 回到自由模式
+
+### 訊息刪除（Phase 3）
+
+- 每條訊息 hover 時左側 ↩ 回滾、右側 ✕ 刪除
+- 回滾：刪除該 sequence 之後所有對話（Toast confirm）
+- 刪除：刪除單條訊息（硬刪除，不可恢復）
+
+### i18n 國際化（Phase 3）
+
+- `i18n/index.tsx`：I18nProvider + useI18n() hook
+- 三語言：zh-TW（繁體中文）、en（English）、ja（日本語）
+- 覆蓋 ~80 個 UI key（遊戲 AI 內容仍由 system prompt 控制語言）
+- SettingsPage 有語言選擇下拉選單
+
+### ToastProvider 通知系統（Phase 3）
+
+- 替代原生 `alert()` 和 `confirm()`（避免阻塞 Electron 事件循環）
+- `toast.show(message)`：自動消失通知
+- `toast.confirm(message) → Promise<boolean>`：非同步確認對話框
+
+### Settings 系統重構（Phase 1）
+
+- v1.0.0：`AppSettings` 包含扁平欄位（apiKey, llmProvider, llmModel, apiBaseUrl, imageProvider, imageModel, stabilityApiKey, imageFrequency）
+- v1.1.0：改為卡片式 Config 系統，每個 Config 獨立儲存，可多組切換
+  - `AppSettings` 僅保留：`activeLlmConfigId`, `activeImageConfigId`, `activeVoiceConfigId`, `imageFrequency`, `autoPlayVoice`, `language`
+  - LLM Config：`llm_configs` 表，provider/model/apiKey/apiBaseUrl/temperature 等
+  - Image Config：`image_configs` 表，provider/model/apiKey/apiBaseUrl/size/quality 等
+  - Voice Config：`voice_configs` 表，provider(openai)/model(tts-1/tts-1-hd)/apiKey/voice/speed 等
+- SettingsPage 改為三組卡片區（LLM / Image / Voice），每張卡片可獨立 Ping 測試、設為啟用、編輯、刪除
+
+---
 
 ### 測試 LM Studio 注意事項
 
