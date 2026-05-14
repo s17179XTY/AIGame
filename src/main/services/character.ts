@@ -1,6 +1,9 @@
 import { randomUUID } from 'crypto'
 import { getDatabase } from '../database'
 import { Character, CharacterConfig, VisualAnchor } from './types'
+import path from 'path'
+import fs from 'fs'
+import { app } from 'electron'
 
 export function createCharacter(
   worldId: string,
@@ -94,6 +97,26 @@ export function updateCharacter(id: string, updates: Partial<CharacterConfig & {
   )
 
   return getCharacter(id)
+}
+
+
+export function uploadCharacterImage(characterId: string, sourcePath: string): Character | null {
+  const char = getCharacter(characterId)
+  if (!char) return null
+
+  const charDir = path.join(app.getPath('userData'), 'characters')
+  if (!fs.existsSync(charDir)) {
+    fs.mkdirSync(charDir, { recursive: true })
+  }
+
+  const ext = path.extname(sourcePath) || '.png'
+  const destPath = path.join(charDir, characterId + '_' + Date.now() + ext)
+  fs.copyFileSync(sourcePath, destPath)
+
+  const db = getDatabase()
+  db.prepare('UPDATE characters SET image_path = ? WHERE id = ?').run(destPath, characterId)
+
+  return getCharacter(characterId)
 }
 
 export function deleteCharacter(id: string): boolean {

@@ -1,5 +1,7 @@
 import { randomUUID } from 'crypto'
 import { getDatabase } from '../database'
+import { updateWorld, getWorldState as getWorldStateFromWorld } from './world'
+import { updateCharacter as updateCharacterInDb } from './character'
 import {
   World,
   WorldState,
@@ -13,6 +15,9 @@ import {
   StoryEntry,
   GameAction,
   GameResponse,
+  GMCommandResponse,
+  WorldConfig,
+  CharacterConfig,
   DialogueEntry,
   RelationshipUpdate,
   ImageContext,
@@ -341,7 +346,7 @@ function evaluateImageTrigger(
   currentState: WorldState,
   settings: AppSettings
 ): ImageTrigger | undefined {
-  if (!trigger || settings.imageProvider === 'none') return undefined
+  if (!trigger || settings.activeImageConfigId === null) return undefined
 
   if (settings.imageFrequency === 'conservative') {
     // Only scene-level changes trigger
@@ -491,4 +496,22 @@ export function getStoryLog(
     imagePath: row.image_path as string | null,
     createdAt: row.created_at as string,
   }))
+}
+// ============================================================
+// ============================================================
+// Story Log Deletion
+// ============================================================
+
+export function deleteStoryEntry(id: string): boolean {
+  const db = getDatabase()
+  const result = db.prepare('DELETE FROM story_log WHERE id = ?').run(id)
+  return result.changes > 0
+}
+
+export function deleteStoryAfter(worldId: string, sequence: number): number {
+  const db = getDatabase()
+  const result = db.prepare(
+    'DELETE FROM story_log WHERE world_id = ? AND sequence > ?'
+  ).run(worldId, sequence)
+  return result.changes
 }

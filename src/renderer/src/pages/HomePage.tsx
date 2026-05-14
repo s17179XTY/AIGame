@@ -1,8 +1,12 @@
 ﻿import React, { useEffect, useState } from 'react'
 import { useAppStore } from '../stores/appStore'
+import { useI18n } from '../i18n'
+import { useToast } from '../components/ToastProvider'
 import type { World } from '../../../main/services/types'
 
 export default function HomePage() {
+  const { t } = useI18n()
+  const toast = useToast()
   const [worlds, setWorlds] = useState<World[]>([])
   const setPage = useAppStore((s) => s.setPage)
   const selectWorld = useAppStore((s) => s.selectWorld)
@@ -31,7 +35,7 @@ export default function HomePage() {
             ✦
           </div>
           <h1 className="text-xl font-bold">
-            <span className="gradient-text">AI Novel Game</span>
+            <span className="gradient-text">{t('app.title')}</span>
           </h1>
         </div>
         <button

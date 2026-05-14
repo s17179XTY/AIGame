@@ -1,6 +1,8 @@
 ﻿import React, { useEffect } from 'react'
 import { useAppStore } from './stores/appStore'
 import { useSettingsStore } from './stores/settingsStore'
+import { I18nProvider } from './i18n'
+import { ToastProvider } from './components/ToastProvider'
 import HomePage from './pages/HomePage'
 import SettingsPage from './pages/SettingsPage'
 import WorldCreatePage from './pages/WorldCreatePage'
@@ -12,6 +14,8 @@ export default function App() {
   const currentPage = useAppStore((s) => s.currentPage)
   const loadSettings = useSettingsStore((s) => s.loadSettings)
   const loaded = useSettingsStore((s) => s.loaded)
+  const settings = useSettingsStore((s) => s.settings)
+  const updateSettings = useSettingsStore((s) => s.updateSettings)
 
   useEffect(() => {
     loadSettings()
@@ -49,5 +53,14 @@ export default function App() {
     }
   }
 
-  return <div className="h-screen bg-game-bg text-game-text">{renderPage()}</div>
+  return (
+    <I18nProvider
+      initialLang={settings.language || 'zh-TW'}
+      onLangChange={(lang) => updateSettings({ language: lang })}
+    >
+      <ToastProvider>
+        <div className="h-screen bg-game-bg text-game-text">{renderPage()}</div>
+      </ToastProvider>
+    </I18nProvider>
+  )
 }

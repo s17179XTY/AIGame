@@ -39,6 +39,7 @@ function initializeSchema(db: Database.Database): void {
       is_dynamic INTEGER NOT NULL DEFAULT 0,
       is_locked INTEGER NOT NULL DEFAULT 0,
       visual_anchor TEXT,
+      image_path TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
     );
@@ -85,6 +86,31 @@ function initializeSchema(db: Database.Database): void {
       top_p REAL NOT NULL DEFAULT 1.0,
       frequency_penalty REAL NOT NULL DEFAULT 0,
       presence_penalty REAL NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS image_configs (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      provider TEXT NOT NULL DEFAULT 'openai',
+      model TEXT NOT NULL DEFAULT 'dall-e-3',
+      api_key TEXT NOT NULL DEFAULT '',
+      api_base_url TEXT NOT NULL DEFAULT '',
+      size TEXT NOT NULL DEFAULT '1024x1024',
+      quality TEXT NOT NULL DEFAULT 'standard',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS voice_configs (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      provider TEXT NOT NULL DEFAULT 'openai',
+      model TEXT NOT NULL DEFAULT 'tts-1',
+      api_key TEXT NOT NULL DEFAULT '',
+      voice TEXT NOT NULL DEFAULT 'alloy',
+      speed REAL NOT NULL DEFAULT 1.0,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );

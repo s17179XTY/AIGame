@@ -1,8 +1,12 @@
 ﻿import React, { useState } from 'react'
 import { useAppStore } from '../stores/appStore'
+import { useI18n } from '../i18n'
+import { useToast } from '../components/ToastProvider'
 import type { WorldConfig, CharacterConfig } from '../../../main/services/types'
 
 export default function WorldCreatePage() {
+  const { t } = useI18n()
+  const toast = useToast()
   const setPage = useAppStore((s) => s.setPage)
   const selectWorld = useAppStore((s) => s.selectWorld)
 
@@ -25,6 +29,17 @@ export default function WorldCreatePage() {
 
   const [importantChars, setImportantChars] = useState<CharacterConfig[]>([])
   const [creating, setCreating] = useState(false)
+  const [showCharModal, setShowCharModal] = useState(false)
+  const [newChar, setNewChar] = useState<CharacterConfig & { imagePath?: string }>({
+    name: '',
+    gender: '',
+    age: 0,
+    appearance: '',
+    personality: '',
+    extraPrompt: '',
+    imagePath: undefined,
+  })
+  const [charImagePreview, setCharImagePreview] = useState<string | null>(null)
 
   const updateWorld = <K extends keyof WorldConfig>(key: K, value: WorldConfig[K]) => {
     setWorldConfig((w) => ({ ...w, [key]: value }))
@@ -49,6 +64,31 @@ export default function WorldCreatePage() {
 
   const removeImportantChar = (index: number) => {
     setImportantChars((chars) => chars.filter((_, i) => i !== index))
+  }
+
+  const handleCharImageUpload = async () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.onchange = async (e: any) => {
+      const file = e.target.files?.[0]
+      if (file) {
+        setNewChar((c) => ({ ...c, imagePath: file.path }))
+        setCharImagePreview(file.path)
+      }
+    }
+    input.click()
+  }
+
+  const confirmAddChar = () => {
+    if (!newChar.name.trim() || !newChar.gender.trim() || !newChar.age) {
+      toast.show(t('worldCreate.fillCharRequired'))
+      return
+    }
+    setImportantChars([...importantChars, { ...newChar }])
+    setShowCharModal(false)
+    setNewChar({ name: '', gender: '', age: 0, appearance: '', personality: '', extraPrompt: '', imagePath: undefined })
+    setCharImagePreview(null)
   }
 
   const handleCreate = async () => {
