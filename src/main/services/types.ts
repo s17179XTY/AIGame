@@ -304,6 +304,8 @@ export interface AppSettings {
   activeVoiceConfigId: string | null
   imageFrequency: 'conservative' | 'standard' | 'rich'
   autoPlayVoice: boolean
+  imageEnabled: boolean
+  voiceEnabled: boolean
   language: 'zh-TW' | 'en' | 'ja'
 }
 
@@ -313,6 +315,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   activeVoiceConfigId: null,
   imageFrequency: 'standard',
   autoPlayVoice: true,
+  imageEnabled: true,
+  voiceEnabled: true,
   language: 'zh-TW',
 }
 
@@ -365,12 +369,14 @@ export const IPC_CHANNELS = {
   CHARACTER_UPLOAD_IMAGE: 'character:upload-image',
   CHARACTER_LIST_GLOBAL: 'character:list-global',
   CHARACTER_ASSIGN_WORLD: 'character:assign-world',
+  CHARACTER_AUTO_FILL: 'character:auto-fill',
 
   // Game
   GAME_ACTION: 'game:action',
   GAME_NEW_CHARACTER_CONFIRM: 'game:new-character-confirm',
   GAME_GM_ACTION: 'game:gm-action',
   GAME_START: 'game:start',
+  WORLD_AUTO_FILL: 'world:auto-fill',
 
   // Image
   IMAGE_GENERATE_SCENE: 'image:generate-scene',

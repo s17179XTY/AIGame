@@ -1,7 +1,8 @@
-ï»¿import React, { useState } from 'react'
+import React, { useState } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { useI18n } from '../i18n'
 import { useToast } from '../components/ToastProvider'
+import CharacterFormModal from '../components/CharacterFormModal'
 import type { WorldConfig, CharacterConfig, Character } from '../../../main/services/types'
 
 export default function WorldCreatePage() {
@@ -109,11 +110,11 @@ export default function WorldCreatePage() {
 
   const handleCreate = async () => {
     if (!worldConfig.name || !worldConfig.worldview) {
-      alert('è«‹è‡³å°‘å¡«å¯«ä¸–ç•Œåç¨±å’Œä¸–ç•Œè§€')
+      alert('ÕˆÖÁÉÙÌîŒ‘ÊÀ½çÃû·QºÍÊÀ½çÓ^')
       return
     }
     if (!playerConfig.name) {
-      alert('è«‹å¡«å¯«ä¸»è§’åç¨±')
+      alert('ÕˆÌîŒ‘Ö÷½ÇÃû·Q')
       return
     }
 
@@ -136,7 +137,7 @@ export default function WorldCreatePage() {
       selectWorld(world.id)
       setPage('game')
     } catch (err: any) {
-      alert('å»ºç«‹å¤±æ•—: ' + (err.message ?? 'æœªçŸ¥éŒ¯èª¤'))
+      alert('½¨Á¢Ê§”¡: ' + (err.message ?? 'Î´ÖªåeÕ`'))
     } finally {
       setCreating(false)
     }
@@ -154,9 +155,9 @@ export default function WorldCreatePage() {
           onClick={() => setPage('home')}
           className="flex items-center gap-1.5 text-game-muted hover:text-game-text transition-colors text-sm"
         >
-          â† è¿”å›
+          ¡û ·µ»Ø
         </button>
-        <h1 className="text-xl font-bold gradient-text">å»ºç«‹æ–°ä¸–ç•Œ</h1>
+        <h1 className="text-xl font-bold gradient-text">½¨Á¢ĞÂÊÀ½ç</h1>
       </header>
 
       <main className="flex-1 overflow-y-auto p-8">
@@ -164,64 +165,64 @@ export default function WorldCreatePage() {
           {/* World Config */}
           <section className="rounded-2xl bg-game-panel/60 border border-white/[0.07] p-6 backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-6">
-              <span className="text-xl">ğŸŒ</span>
-              <h2 className="text-lg font-semibold text-game-text">ä¸–ç•Œè¨­å®š</h2>
+              <span className="text-xl">??</span>
+              <h2 className="text-lg font-semibold text-game-text">ÊÀ½çÔO¶¨</h2>
             </div>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-game-muted mb-2">
-                  ä¸–ç•Œåç¨± <span className="text-indigo-400">*</span>
+                  ÊÀ½çÃû·Q <span className="text-indigo-400">*</span>
                 </label>
                 <input
                   type="text"
                   value={worldConfig.name}
                   onChange={(e) => updateWorld('name', e.target.value)}
-                  placeholder="ä¾‹å¦‚ï¼šåŠèˆ‡é­”æ³•çš„å¤§é™¸"
+                  placeholder="ÀıÈç£º„¦ÅcÄ§·¨µÄ´óê‘"
                   className={inputClass}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-game-muted mb-2">
-                  ä¸–ç•Œè§€ <span className="text-indigo-400">*</span>
+                  ÊÀ½çÓ^ <span className="text-indigo-400">*</span>
                 </label>
                 <textarea
                   value={worldConfig.worldview}
                   onChange={(e) => updateWorld('worldview', e.target.value)}
-                  placeholder="æè¿°é€™å€‹ä¸–ç•Œçš„èƒŒæ™¯ã€æ­·å²ã€é­”æ³•é«”ç³»ã€ç¨®æ—ã€æ”¿æ²»æ ¼å±€ç­‰..."
+                  placeholder="ÃèÊöß@‚€ÊÀ½çµÄ±³¾°¡¢švÊ·¡¢Ä§·¨ówÏµ¡¢·N×å¡¢ÕşÖÎ¸ñ¾ÖµÈ..."
                   rows={4}
                   className={textareaClass}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-game-muted mb-2">ä¸–ç•Œè¦å‰‡</label>
+                <label className="block text-sm font-medium text-game-muted mb-2">ÊÀ½çÒ„t</label>
                 <textarea
                   value={worldConfig.rules}
                   onChange={(e) => updateWorld('rules', e.target.value)}
-                  placeholder="ç‰¹æ®Šè¦å‰‡æˆ–é™åˆ¶ï¼Œå¦‚ï¼šæ­¤ä¸–ç•Œä¸å­˜åœ¨æ™‚é–“é­”æ³•..."
+                  placeholder="ÌØÊâÒ„t»òÏŞÖÆ£¬Èç£º´ËÊÀ½ç²»´æÔÚ•régÄ§·¨..."
                   rows={3}
                   className={textareaClass}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-game-muted mb-2">AI ç³»çµ± Prompt</label>
+                <label className="block text-sm font-medium text-game-muted mb-2">AI Ïµ½y Prompt</label>
                 <textarea
                   value={worldConfig.systemPrompt}
                   onChange={(e) => updateWorld('systemPrompt', e.target.value)}
-                  placeholder="è‡ªå®šç¾©ç³»çµ±æç¤ºè©ï¼ˆå¯ç•™ç©ºï¼Œä½¿ç”¨å…§å»ºé è¨­ï¼‰"
+                  placeholder="×Ô¶¨ÁxÏµ½yÌáÊ¾Ô~£¨¿ÉÁô¿Õ£¬Ê¹ÓÃƒÈ½¨îAÔO£©"
                   rows={3}
                   className={textareaClass}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-game-muted mb-2">åˆå§‹å ´æ™¯</label>
+                <label className="block text-sm font-medium text-game-muted mb-2">³õÊ¼ˆö¾°</label>
                 <textarea
                   value={worldConfig.initialScene}
                   onChange={(e) => updateWorld('initialScene', e.target.value)}
-                  placeholder="éŠæˆ²é–‹å§‹æ™‚çš„å ´æ™¯æè¿°ï¼Œä¾‹å¦‚ï¼šä½ åœ¨ä¸€é–“æ˜æš—çš„é…’é¤¨ä¸­é†’ä¾†..."
+                  placeholder="ß[‘òé_Ê¼•rµÄˆö¾°ÃèÊö£¬ÀıÈç£ºÄãÔÚÒ»ég»è°µµÄ¾Æğ^ÖĞĞÑí..."
                   rows={3}
                   className={textareaClass}
                 />
@@ -232,8 +233,8 @@ export default function WorldCreatePage() {
           {/* Player Character */}
           <section className="rounded-2xl bg-game-panel/60 border border-white/[0.07] p-6 backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-6">
-              <span className="text-xl">ğŸ¦¸</span>
-              <h2 className="text-lg font-semibold text-game-text">ä¸»è§’è¨­å®šï¼ˆä½ ï¼‰</h2>
+              <span className="text-xl">??</span>
+              <h2 className="text-lg font-semibold text-game-text">Ö÷½ÇÔO¶¨£¨Äã£©</h2>
             </div>
             <CharacterForm config={playerConfig} update={updatePlayer} inputClass={inputClass} textareaClass={textareaClass} />
           </section>
@@ -241,11 +242,11 @@ export default function WorldCreatePage() {
           {/* Select from global character templates */}
           <section className="rounded-2xl bg-game-panel/60 border border-white/[0.07] p-6 backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-4">
-              <span className="text-xl">ğŸ“‹</span>
-              <h2 className="text-lg font-semibold text-game-text">å¾è§’è‰²æ¨¡æ¿é¸å–</h2>
+              <span className="text-xl">??</span>
+              <h2 className="text-lg font-semibold text-game-text">Ä½ÇÉ«Ä£°åßxÈ¡</h2>
             </div>
             {globalChars.length === 0 ? (
-              <p className="text-sm text-game-muted py-2">å°šç„¡è§’è‰²æ¨¡æ¿ï¼Œè«‹å…ˆåœ¨é¦–é å»ºç«‹ï¼Œæˆ–æ‰‹å‹•æ·»åŠ ä¸‹æ–¹é‡è¦è§’è‰²</p>
+              <p className="text-sm text-game-muted py-2">ÉĞŸo½ÇÉ«Ä£°å£¬ÕˆÏÈÔÚÊ×í“½¨Á¢£¬»òÊÖ„ÓÌí¼ÓÏÂ·½ÖØÒª½ÇÉ«</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {globalChars.map((char) => (
@@ -265,7 +266,7 @@ export default function WorldCreatePage() {
               </div>
             )}
             {selectedCharIds.size > 0 && (
-              <p className="text-xs text-game-highlight mt-3">å·²é¸å– {selectedCharIds.size} å€‹è§’è‰²</p>
+              <p className="text-xs text-game-highlight mt-3">ÒÑßxÈ¡ {selectedCharIds.size} ‚€½ÇÉ«</p>
             )}
           </section>
 
@@ -273,19 +274,19 @@ export default function WorldCreatePage() {
           <section className="rounded-2xl bg-game-panel/60 border border-white/[0.07] p-6 backdrop-blur-sm">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
-                <span className="text-xl">ğŸ‘¥</span>
-                <h2 className="text-lg font-semibold text-game-text">é‡è¦è§’è‰²ï¼ˆå¯é¸ï¼‰</h2>
+                <span className="text-xl">??</span>
+                <h2 className="text-lg font-semibold text-game-text">ÖØÒª½ÇÉ«£¨¿Éßx£©</h2>
               </div>
               <button
                 onClick={addImportantChar}
                 className="px-4 py-2 text-sm rounded-xl border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/[0.06] hover:border-indigo-500/40 transition-all duration-200"
               >
-                + æ–°å¢è§’è‰²
+                + ĞÂÔö½ÇÉ«
               </button>
             </div>
 
             {importantChars.length === 0 && (
-              <p className="text-sm text-game-muted py-4">å°šæœªæ·»åŠ é‡è¦è§’è‰²ï¼Œå¯ç”± AI åœ¨éŠæˆ²ä¸­è£œå…¨</p>
+              <p className="text-sm text-game-muted py-4">ÉĞÎ´Ìí¼ÓÖØÒª½ÇÉ«£¬¿ÉÓÉ AI ÔÚß[‘òÖĞÑaÈ«</p>
             )}
 
             {importantChars.map((char, i) => (
@@ -294,9 +295,9 @@ export default function WorldCreatePage() {
                   onClick={() => removeImportantChar(i)}
                   className="absolute top-3 right-3 w-7 h-7 rounded-lg flex items-center justify-center text-red-400/60 hover:text-red-300 hover:bg-red-500/10 transition-all duration-200 text-sm"
                 >
-                  âœ•
+                  ?
                 </button>
-                <h3 className="text-sm font-semibold mb-4 text-game-muted">è§’è‰² #{i + 1}</h3>
+                <h3 className="text-sm font-semibold mb-4 text-game-muted">½ÇÉ« #{i + 1}</h3>
                 <CharacterForm
                   config={char}
                   update={(key, value) => updateImportantChar(i, key, value)}
@@ -307,13 +308,31 @@ export default function WorldCreatePage() {
             ))}
           </section>
 
-          {/* Submit */}
+          
+      {showCharModal && (
+        <CharacterFormModal
+          mode='create'
+          onSave={async (config) => {
+            if (!config.name.trim() || !config.gender.trim() || !config.age) {
+              toast.show(t('worldCreate.fillCharRequired'))
+              return
+            }
+            setImportantChars([...importantChars, { ...config }])
+            setShowCharModal(false)
+            setNewChar({ name: '', gender: '', age: 0, appearance: '', personality: '', extraPrompt: '', imagePath: undefined })
+            setCharImagePreview(null)
+          }}
+          onClose={() => { setShowCharModal(false); setCharImagePreview(null) }}
+        />
+      )}
+
+{/* Submit */}
           <button
             onClick={handleCreate}
             disabled={creating}
             className="w-full btn-primary py-3.5 rounded-xl font-semibold text-base text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none shadow-lg shadow-indigo-500/25 transition-all duration-200"
           >
-            {creating ? 'å»ºç«‹ä¸­...' : 'å»ºç«‹ä¸–ç•Œä¸¦é–‹å§‹å†’éšª'}
+            {creating ? '½¨Á¢ÖĞ...' : '½¨Á¢ÊÀ½çKé_Ê¼Ã°ëU'}
           </button>
         </div>
       </main>
@@ -336,27 +355,27 @@ function CharacterForm({
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-4">
         <div>
-          <label className="block text-xs font-medium text-game-muted mb-1.5">åç¨± *</label>
+          <label className="block text-xs font-medium text-game-muted mb-1.5">Ãû·Q *</label>
           <input
             type="text"
             value={config.name}
             onChange={(e) => update('name', e.target.value)}
-            placeholder="è§’è‰²åç¨±"
+            placeholder="½ÇÉ«Ãû·Q"
             className={inputClass}
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-game-muted mb-1.5">æ€§åˆ¥</label>
+          <label className="block text-xs font-medium text-game-muted mb-1.5">ĞÔ„e</label>
           <input
             type="text"
             value={config.gender}
             onChange={(e) => update('gender', e.target.value)}
-            placeholder="ç”· / å¥³ / å…¶ä»–"
+            placeholder="ÄĞ / Å® / ÆäËû"
             className={inputClass}
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-game-muted mb-1.5">å¹´é½¡</label>
+          <label className="block text-xs font-medium text-game-muted mb-1.5">Äêıg</label>
           <input
             type="number"
             value={config.age || ''}
@@ -368,34 +387,34 @@ function CharacterForm({
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-game-muted mb-1.5">å¤–è§€</label>
+        <label className="block text-xs font-medium text-game-muted mb-1.5">ÍâÓ^</label>
         <input
           type="text"
           value={config.appearance}
           onChange={(e) => update('appearance', e.target.value)}
-          placeholder="èº«é«˜ã€é«®è‰²ã€æœè£é¢¨æ ¼ç­‰"
+          placeholder="Éí¸ß¡¢óŒÉ«¡¢·şÑbïL¸ñµÈ"
           className={inputClass}
         />
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-game-muted mb-1.5">æ€§æ ¼</label>
+        <label className="block text-xs font-medium text-game-muted mb-1.5">ĞÔ¸ñ</label>
         <textarea
           value={config.personality}
           onChange={(e) => update('personality', e.target.value)}
-          placeholder="æ ¸å¿ƒæ€§æ ¼ç‰¹å¾µã€åƒ¹å€¼è§€ã€èªªè©±é¢¨æ ¼..."
+          placeholder="ºËĞÄĞÔ¸ñÌØáç¡¢ƒrÖµÓ^¡¢ÕfÔ’ïL¸ñ..."
           rows={2}
           className={textareaClass}
         />
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-game-muted mb-1.5">é¡å¤– Prompt è¦æ±‚</label>
+        <label className="block text-xs font-medium text-game-muted mb-1.5">î~Íâ Prompt ÒªÇó</label>
         <input
           type="text"
           value={config.extraPrompt}
           onChange={(e) => update('extraPrompt', e.target.value)}
-          placeholder="å° AI ç”Ÿæˆæ­¤è§’è‰²æ™‚çš„ç‰¹åˆ¥è¦æ±‚"
+          placeholder="Œ¦ AI Éú³É´Ë½ÇÉ«•rµÄÌØ„eÒªÇó"
           className={inputClass}
         />
       </div>

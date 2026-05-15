@@ -1,8 +1,9 @@
-ï»¿import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { useI18n } from '../i18n'
 import { useToast } from '../components/ToastProvider'
 import WorldSettingsModal from '../components/WorldSettingsModal'
+import CharacterFormModal from '../components/CharacterFormModal'
 import type { World, Character, CharacterConfig } from '../../../main/services/types'
 
 export default function HomePage() {
@@ -43,7 +44,7 @@ export default function HomePage() {
 
   const handleCreateChar = async () => {
     if (!charForm.name.trim()) {
-      toast.show('è«‹å¡«å¯«è§’è‰²åç¨±')
+      toast.show('ÕˆÌîŒ‘½ÇÉ«Ãû·Q')
       return
     }
     try {
@@ -52,7 +53,7 @@ export default function HomePage() {
       setShowCharForm(false)
       setCharForm({ name: '', nickname: '', gender: '', age: 0, appearance: '', personality: '', extraPrompt: '' })
     } catch (err: any) {
-      toast.show('å»ºç«‹å¤±æ•—: ' + (err.message ?? 'æœªçŸ¥éŒ¯èª¤'))
+      toast.show('½¨Á¢Ê§”¡: ' + (err.message ?? 'Î´ÖªåeÕ`'))
     }
   }
 
@@ -64,17 +65,17 @@ export default function HomePage() {
       setEditingChar(null)
       setCharForm({ name: '', nickname: '', gender: '', age: 0, appearance: '', personality: '', extraPrompt: '' })
     } catch (err: any) {
-      toast.show('æ›´æ–°å¤±æ•—: ' + (err.message ?? 'æœªçŸ¥éŒ¯èª¤'))
+      toast.show('¸üĞÂÊ§”¡: ' + (err.message ?? 'Î´ÖªåeÕ`'))
     }
   }
 
   const handleDeleteChar = async (id: string) => {
-    if (!confirm('ç¢ºå®šè¦åˆªé™¤æ­¤è§’è‰²å—ï¼Ÿ')) return
+    if (!confirm('´_¶¨Òª„h³ı´Ë½ÇÉ«†á£¿')) return
     try {
       await window.api.character.delete(id)
       await refreshChars()
     } catch (err: any) {
-      toast.show('åˆªé™¤å¤±æ•—: ' + (err.message ?? 'æœªçŸ¥éŒ¯èª¤'))
+      toast.show('„h³ıÊ§”¡: ' + (err.message ?? 'Î´ÖªåeÕ`'))
     }
   }
 
@@ -96,7 +97,7 @@ export default function HomePage() {
   }
 
   const handleDeleteWorld = async (id: string, name: string) => {
-    if (!confirm(`ç¢ºå®šè¦åˆªé™¤ä¸–ç•Œã€Œ${name}ã€å—ï¼Ÿæ­¤æ“ä½œç„¡æ³•å¾©åŸã€‚`)) return
+    if (!confirm(`´_¶¨Òª„h³ıÊÀ½ç¡¸${name}¡¹†á£¿´Ë²Ù×÷Ÿo·¨ÍÔ­¡£`)) return
     await window.api.world.delete(id)
     setWorlds((w) => w.filter((x) => x.id !== id))
   }
@@ -107,7 +108,7 @@ export default function HomePage() {
       <header className="flex items-center justify-between px-8 py-5 border-b border-white/[0.07]">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-lg shadow-lg shadow-indigo-500/20">
-            âœ¦
+            ?
           </div>
           <h1 className="text-xl font-bold">
             <span className="gradient-text">{t('app.title')}</span>
@@ -117,7 +118,7 @@ export default function HomePage() {
           onClick={() => setPage('settings')}
           className="px-4 py-2 text-sm rounded-xl border border-white/[0.10] text-game-muted hover:border-indigo-500/40 hover:text-indigo-300 hover:bg-white/[0.03] transition-all duration-200"
         >
-          è¨­å®š
+          ÔO¶¨
         </button>
       </header>
 
@@ -126,22 +127,22 @@ export default function HomePage() {
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-2xl font-bold text-game-text">ä½ çš„ä¸–ç•Œ</h2>
-              <p className="text-sm text-game-muted mt-1">é¸æ“‡ä¸€å€‹ä¸–ç•Œï¼Œé–‹å§‹ä½ çš„å†’éšª</p>
+              <h2 className="text-2xl font-bold text-game-text">ÄãµÄÊÀ½ç</h2>
+              <p className="text-sm text-game-muted mt-1">ßx“ñÒ»‚€ÊÀ½ç£¬é_Ê¼ÄãµÄÃ°ëU</p>
             </div>
             <button
               onClick={() => setPage('world-create')}
               className="btn-primary px-5 py-2.5 rounded-xl font-medium text-sm text-white shadow-lg shadow-indigo-500/25"
             >
-              + å»ºç«‹æ–°ä¸–ç•Œ
+              + ½¨Á¢ĞÂÊÀ½ç
             </button>
           </div>
 
           {worlds.length === 0 ? (
             <div className="text-center py-24">
-              <div className="text-6xl mb-6 opacity-30">ğŸŒŒ</div>
-              <p className="text-lg text-game-muted mb-2">å°šç„¡ä»»ä½•ä¸–ç•Œ</p>
-              <p className="text-sm text-game-muted/60">é»æ“Šä¸Šæ–¹æŒ‰éˆ•å»ºç«‹ä½ çš„ç¬¬ä¸€å€‹ä¸–ç•Œï¼Œé–‹å§‹å†’éšªï¼</p>
+              <div className="text-6xl mb-6 opacity-30">??</div>
+              <p className="text-lg text-game-muted mb-2">ÉĞŸoÈÎºÎÊÀ½ç</p>
+              <p className="text-sm text-game-muted/60">üc“ôÉÏ·½°´âo½¨Á¢ÄãµÄµÚÒ»‚€ÊÀ½ç£¬é_Ê¼Ã°ëU£¡</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -153,7 +154,7 @@ export default function HomePage() {
                 >
                   <div className="flex items-center gap-4 flex-1 min-w-0">
                     <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500/30 to-purple-500/20 flex items-center justify-center text-xl shrink-0 ring-1 ring-white/[0.07]">
-                      ğŸŒ
+                      ??
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-base truncate text-game-text">{world.name}</h3>
@@ -161,7 +162,7 @@ export default function HomePage() {
                         {world.config.worldview.slice(0, 80)}{world.config.worldview.length > 80 ? '...' : ''}
                       </p>
                       <p className="text-xs text-game-muted/50 mt-1.5">
-                        æœ€å¾Œæ›´æ–°: {new Date(world.updatedAt).toLocaleString('zh-TW')}
+                        ×îáá¸üĞÂ: {new Date(world.updatedAt).toLocaleString('zh-TW')}
                       </p>
                     </div>
                   </div>
@@ -172,9 +173,9 @@ export default function HomePage() {
                         setShowSettingsWorldId(world.id)
                       }}
                       className="px-3 py-1.5 text-xs rounded-lg border border-white/[0.10] text-game-muted hover:text-indigo-300 hover:border-indigo-500/40 hover:bg-white/[0.03] transition-all duration-200"
-                      title="è¨­å®š"
+                      title="ÔO¶¨"
                     >
-                      {'âš™ï¸'}
+                      {'??'}
                     </button>
                     <button
                       onClick={(e) => {
@@ -183,7 +184,7 @@ export default function HomePage() {
                       }}
                       className="px-3 py-1.5 text-xs rounded-lg border border-red-400/20 text-red-400/80 hover:bg-red-500/10 hover:border-red-400/40 transition-all duration-200"
                     >
-                      åˆªé™¤
+                      „h³ı
                     </button>
                   </div>
                 </div>
@@ -196,22 +197,22 @@ export default function HomePage() {
         <div className="max-w-3xl mx-auto mt-12">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-xl font-bold text-game-text">è§’è‰²æ¨¡æ¿</h2>
-              <p className="text-sm text-game-muted mt-1">å»ºç«‹è§’è‰²æ¨¡æ¿ï¼Œåœ¨å‰µé€ ä¸–ç•Œæ™‚å¯ç›´æ¥é¸å–åŠ å…¥</p>
+              <h2 className="text-xl font-bold text-game-text">½ÇÉ«Ä£°å</h2>
+              <p className="text-sm text-game-muted mt-1">½¨Á¢½ÇÉ«Ä£°å£¬ÔÚ„“ÔìÊÀ½ç•r¿ÉÖ±½ÓßxÈ¡¼ÓÈë</p>
             </div>
             <button
               onClick={() => { setShowCharForm(true); setEditingChar(null); setCharForm({ name: '', nickname: '', gender: '', age: 0, appearance: '', personality: '', extraPrompt: '' }) }}
               className="px-4 py-2 rounded-xl border border-game-highlight/30 text-game-highlight text-sm hover:bg-game-highlight/10 transition-colors"
             >
-              + æ–°å¢è§’è‰²
+              + ĞÂÔö½ÇÉ«
             </button>
           </div>
 
           {characters.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-4xl mb-4 opacity-30">ğŸ‘¤</div>
-              <p className="text-sm text-game-muted">å°šç„¡è§’è‰²æ¨¡æ¿</p>
-              <p className="text-xs text-game-muted/60 mt-1">é»æ“Šä¸Šæ–¹æŒ‰éˆ•å»ºç«‹è§’è‰²ï¼Œåœ¨å‰µå»ºä¸–ç•Œæ™‚å¯ç›´æ¥é¸å–</p>
+              <div className="text-4xl mb-4 opacity-30">??</div>
+              <p className="text-sm text-game-muted">ÉĞŸo½ÇÉ«Ä£°å</p>
+              <p className="text-xs text-game-muted/60 mt-1">üc“ôÉÏ·½°´âo½¨Á¢½ÇÉ«£¬ÔÚ„“½¨ÊÀ½ç•r¿ÉÖ±½ÓßxÈ¡</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -229,12 +230,12 @@ export default function HomePage() {
                       <span className="font-medium text-sm text-game-text">{char.name}</span>
                       {char.nickname && <span className="text-xs text-game-muted/70">({char.nickname})</span>}
                     </div>
-                    <p className="text-xs text-game-muted">{char.gender} Â· {char.age}æ­²</p>
+                    <p className="text-xs text-game-muted">{char.gender} ¡¤ {char.age}šq</p>
                     <p className="text-xs text-game-muted/60 truncate">{char.personality.slice(0, 50)}{char.personality.length > 50 ? '...' : ''}</p>
                   </div>
                   <button onClick={(e) => { e.stopPropagation(); handleDeleteChar(char.id) }}
                     className="px-2 py-1 text-xs border border-red-400/20 rounded-lg text-red-400/70 hover:bg-red-500/10 hover:border-red-400/40 opacity-0 group-hover:opacity-100 transition-all shrink-0">
-                    åˆªé™¤
+                    „h³ı
                   </button>
                 </div>
               ))}
@@ -246,70 +247,19 @@ export default function HomePage() {
 
       {/* Character Form Modal */}
       {(showCharForm || editingChar) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-game-panel rounded-2xl border border-game-accent/30 w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-game-accent/20">
-              <h3 className="text-lg font-semibold text-game-highlight">
-                {editingChar ? 'ç·¨è¼¯è§’è‰²' : 'æ–°å¢è§’è‰²'}
-              </h3>
-              <button onClick={() => { setShowCharForm(false); setEditingChar(null) }} className="text-game-muted hover:text-game-text text-xl">&times;</button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs text-game-muted mb-1">åç¨± *</label>
-                <input type="text" value={charForm.name}
-                  onChange={(e) => setCharForm((f) => ({ ...f, name: e.target.value }))}
-                  className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none text-sm" />
-              </div>
-              <div>
-                <label className="block text-xs text-game-muted mb-1">å°å</label>
-                <input type="text" value={charForm.nickname || ''}
-                  onChange={(e) => setCharForm((f) => ({ ...f, nickname: e.target.value }))}
-                  className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none text-sm" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs text-game-muted mb-1">æ€§åˆ¥</label>
-                  <input type="text" value={charForm.gender}
-                    onChange={(e) => setCharForm((f) => ({ ...f, gender: e.target.value }))}
-                    placeholder="ç”· / å¥³"
-                    className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none text-sm" />
-                </div>
-                <div>
-                  <label className="block text-xs text-game-muted mb-1">å¹´é½¡</label>
-                  <input type="number" value={charForm.age || ''}
-                    onChange={(e) => setCharForm((f) => ({ ...f, age: parseInt(e.target.value) || 0 }))}
-                    className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none text-sm" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs text-game-muted mb-1">å¤–è§€</label>
-                <input type="text" value={charForm.appearance}
-                  onChange={(e) => setCharForm((f) => ({ ...f, appearance: e.target.value }))}
-                  className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none text-sm" />
-              </div>
-              <div>
-                <label className="block text-xs text-game-muted mb-1">æ€§æ ¼</label>
-                <textarea value={charForm.personality}
-                  onChange={(e) => setCharForm((f) => ({ ...f, personality: e.target.value }))}
-                  rows={2}
-                  className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none text-sm resize-y" />
-              </div>
-              <div>
-                <label className="block text-xs text-game-muted mb-1">é¡å¤– Prompt</label>
-                <textarea value={charForm.extraPrompt}
-                  onChange={(e) => setCharForm((f) => ({ ...f, extraPrompt: e.target.value }))}
-                  rows={2}
-                  className="w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none text-sm resize-y" />
-              </div>
-              <button
-                onClick={editingChar ? handleUpdateChar : handleCreateChar}
-                className="w-full py-2.5 bg-game-highlight rounded-xl font-medium hover:bg-game-highlight/80 transition-colors text-sm">
-                {editingChar ? 'å„²å­˜è®Šæ›´' : 'å»ºç«‹è§’è‰²'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <CharacterFormModal
+          mode={editingChar ? 'edit' : 'create'}
+          character={editingChar || undefined}
+          onSave={async (config) => {
+            if (editingChar) {
+              await window.api.character.update(editingChar.id, config)
+            } else {
+              await window.api.character.create('__global__', config, false, false)
+            }
+            await refreshChars()
+          }}
+          onClose={() => { setShowCharForm(false); setEditingChar(null); setCharForm({ name: '', nickname: '', gender: '', age: 0, appearance: '', personality: '', extraPrompt: '' }) }}
+        />
       )}
 
       {showSettingsWorldId && (

@@ -128,6 +128,13 @@ function initializeSchema(db: Database.Database): void {
 
   try { db.exec("ALTER TABLE characters ADD COLUMN nickname TEXT NOT NULL DEFAULT ''"); } catch {}
   try { db.exec("ALTER TABLE characters ADD COLUMN image_path TEXT"); } catch {}
+
+  // Seed global templates world record
+  db.prepare("INSERT OR IGNORE INTO worlds (id, name, config) VALUES (?, ?, ?)").run(
+    '__global__',
+    'Global Templates',
+    JSON.stringify({ name: 'Global Templates', worldview: '', rules: '', systemPrompt: '', initialScene: '' })
+  )
 }
 
 export function closeDatabase(): void {

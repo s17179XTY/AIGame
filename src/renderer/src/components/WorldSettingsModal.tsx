@@ -1,4 +1,4 @@
-ï»¿import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useI18n } from '../i18n'
 import { useToast } from './ToastProvider'
 import type { World, Character, WorldConfig, CharacterConfig } from '../../../main/services/types'
@@ -11,6 +11,7 @@ interface Props {
 
 export default function WorldSettingsModal({ worldId, onClose, onWorldUpdated }: Props) {
   const { t } = useI18n()
+  const toast = useToast()
   const [tab, setTab] = useState<'world' | 'characters'>('world')
   const [world, setWorld] = useState<World | null>(null)
   const [config, setConfig] = useState<WorldConfig>({
@@ -22,6 +23,7 @@ export default function WorldSettingsModal({ worldId, onClose, onWorldUpdated }:
   })
   const [characters, setCharacters] = useState<Character[]>([])
   const [editingChar, setEditingChar] = useState<Character | null>(null)
+  const [showAddCharForm, setShowAddCharForm] = useState(false)
   const [charForm, setCharForm] = useState<CharacterConfig & { imagePath?: string }>({
     name: '',
     nickname: '',
@@ -67,6 +69,7 @@ export default function WorldSettingsModal({ worldId, onClose, onWorldUpdated }:
   }
 
   const openEditChar = (char: Character) => {
+    setShowAddCharForm(false)
     setEditingChar(char)
     setCharForm({
       name: char.name,
@@ -107,6 +110,36 @@ export default function WorldSettingsModal({ worldId, onClose, onWorldUpdated }:
     }
   }
 
+
+  const handleCreateChar = async () => {
+    if (!charForm.name.trim() || !charForm.gender.trim()) {
+      toast.show(t('worldCreate.fillCharRequired'))
+      return
+    }
+    setSaving(true)
+    try {
+      await window.api.character.create(worldId, charForm, false, false)
+      const chars = await window.api.character.list(worldId)
+      setCharacters(chars)
+      setShowAddCharForm(false)
+      setCharForm({
+        name: '',
+        nickname: '',
+        gender: '',
+        age: 0,
+        appearance: '',
+        personality: '',
+        extraPrompt: '',
+        imagePath: undefined,
+      })
+      toast.show(t('worldSettingsModalForm.saveCharacter'))
+    } catch (err: any) {
+      toast.show(t('worldSettingsModal.saveFailed') + ': ' + (err.message ?? t('common.unknownError')))
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const handleCharImageUpload = async () => {
     const input = document.createElement('input')
     input.type = 'file'
@@ -129,7 +162,7 @@ export default function WorldSettingsModal({ worldId, onClose, onWorldUpdated }:
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-game-accent/20">
           <h3 className="text-lg font-semibold text-game-highlight">
-            {world?.name ?? 'World'} Â· {t('worldSettingsModalForm.worldSettings')}
+            {world?.name ?? 'World'} ¡¤ {t('worldSettingsModalForm.worldSettings')}
           </h3>
           <button onClick={onClose} className="text-game-muted hover:text-game-text text-xl">&times;</button>
         </div>
@@ -267,8 +300,81 @@ export default function WorldSettingsModal({ worldId, onClose, onWorldUpdated }:
                     {t('worldSettingsModalForm.saveCharacter')}
                   </button>
                 </div>
+              ) : showAddCharForm ? (
+                <div className="space-y-3">
+                  <button onClick={() => { setShowAddCharForm(false); setCharForm({ name: '', nickname: '', gender: '', age: 0, appearance: '', personality: '', extraPrompt: '', imagePath: undefined }) }}
+                    className="text-xs text-game-muted hover:text-game-text">
+                    &larr; {t('worldSettingsModal.backToList')}
+                  </button>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-game-muted mb-1">{t('worldSettingsModalForm.name')} *</label>
+                      <input type="text" value={charForm.name}
+                        onChange={(e) => setCharForm((f) => ({ ...f, name: e.target.value }))}
+                        className={inputClass} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-game-muted mb-1">{t('worldSettingsModalForm.nickname')}</label>
+                      <input type="text" value={charForm.nickname}
+                        onChange={(e) => setCharForm((f) => ({ ...f, nickname: e.target.value }))}
+                        className={inputClass} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-game-muted mb-1">{t('worldSettingsModalForm.gender')} *</label>
+                      <input type="text" value={charForm.gender}
+                        onChange={(e) => setCharForm((f) => ({ ...f, gender: e.target.value }))}
+                        className={inputClass} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-game-muted mb-1">{t('worldSettingsModalForm.age')}</label>
+                      <input type="number" value={charForm.age || ''}
+                        onChange={(e) => setCharForm((f) => ({ ...f, age: parseInt(e.target.value) || 0 }))}
+                        className={inputClass} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-game-muted mb-1">{t('worldSettingsModalForm.appearance')}</label>
+                    <input type="text" value={charForm.appearance}
+                      onChange={(e) => setCharForm((f) => ({ ...f, appearance: e.target.value }))}
+                      className={inputClass} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-game-muted mb-1">{t('worldSettingsModalForm.personality')}</label>
+                    <textarea value={charForm.personality}
+                      onChange={(e) => setCharForm((f) => ({ ...f, personality: e.target.value }))}
+                      rows={2} className={textareaClass} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-game-muted mb-1">{t('worldSettingsModalForm.image')}</label>
+                    <div className="flex items-center gap-3">
+                      <button onClick={handleCharImageUpload}
+                        className="px-3 py-1.5 text-xs border border-game-highlight/30 rounded-lg text-game-highlight hover:bg-game-highlight/10">
+                        {charForm.imagePath ? t('worldSettingsModalForm.change') : t('worldSettingsModalForm.upload')}
+                      </button>
+                      {charForm.imagePath && (
+                        <img src={`file://${charForm.imagePath}`} alt="preview"
+                          className="w-12 h-12 rounded-lg object-cover border border-white/10" />
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-game-muted mb-1">{t('worldSettingsModalForm.extraPrompt')}</label>
+                    <textarea value={charForm.extraPrompt}
+                      onChange={(e) => setCharForm((f) => ({ ...f, extraPrompt: e.target.value }))}
+                      rows={3} className={textareaClass} />
+                  </div>
+                  <button onClick={handleCreateChar} disabled={saving}
+                    className="w-full py-2 bg-game-highlight rounded-xl font-medium hover:bg-game-highlight/80 disabled:opacity-50">
+                    {t('worldSettingsModalForm.addCharacter')}
+                  </button>
+                </div>
               ) : (
-                <div className="grid gap-3">
+                <>
+                  <button onClick={() => setShowAddCharForm(true)}
+                    className="w-full py-2 mb-3 text-sm border border-dashed border-game-accent/40 rounded-xl text-game-muted hover:text-game-text hover:border-game-accent/60 transition-colors">
+                    + {t('worldSettingsModalForm.addCharacter')}
+                  </button>
+                  <div className="grid gap-3">
                   {characters.map((char) => (
                     <div key={char.id}
                       className="flex items-center gap-4 p-4 rounded-xl border border-game-accent/20 bg-game-bg/30 hover:border-game-accent/40 transition-colors cursor-pointer"
@@ -289,7 +395,7 @@ export default function WorldSettingsModal({ worldId, onClose, onWorldUpdated }:
                             <span className="text-xs px-1.5 py-0.5 rounded bg-game-highlight/20 text-game-highlight">{t('worldSettingsModalForm.player')}</span>
                           )}
                         </div>
-                        <p className="text-xs text-game-muted">{char.gender} Â· {char.age}yo</p>
+                        <p className="text-xs text-game-muted">{char.gender} ¡¤ {char.age}yo</p>
                         <p className="text-xs text-game-muted/60 truncate">{char.personality}</p>
                       </div>
                       <button onClick={(e) => { e.stopPropagation(); handleDeleteChar(char.id) }}
@@ -298,7 +404,8 @@ export default function WorldSettingsModal({ worldId, onClose, onWorldUpdated }:
                       </button>
                     </div>
                   ))}
-                </div>
+                  </div>
+                </>
               )}
             </div>
           )}

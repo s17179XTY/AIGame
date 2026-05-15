@@ -16,8 +16,8 @@ export function createCharacter(
   const now = new Date().toISOString()
 
   db.prepare(
-    `INSERT INTO characters (id, world_id, name, nickname, gender, age, appearance, personality, extra_prompt, is_player, is_dynamic, is_locked, visual_anchor, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO characters (id, world_id, name, nickname, gender, age, appearance, personality, extra_prompt, is_player, is_dynamic, is_locked, visual_anchor, image_path, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id,
     worldId,
@@ -32,6 +32,7 @@ export function createCharacter(
     isDynamic ? 1 : 0,
     0,
     null,
+    config.imagePath || null,
     now
   )
 
@@ -74,13 +75,26 @@ export function listGlobalCharacters(): Character[] {
 }
 
 export function assignCharacterToWorld(characterId: string, worldId: string): Character | null {
-  const db = getDatabase()
   const existing = getCharacter(characterId)
   if (!existing) return null
-  if (existing.worldId !== '__global__') return null // Only global templates can be assigned
+  if (existing.worldId !== '__global__') return null
 
-  db.prepare('UPDATE characters SET world_id = ? WHERE id = ?').run(worldId, characterId)
-  return getCharacter(characterId)
+  // Copy instead of move: create new character in target world
+  const newId = randomUUID()
+  const now = new Date().toISOString()
+  const db = getDatabase()
+  
+  db.prepare(
+    `INSERT INTO characters (id, world_id, name, nickname, gender, age, appearance, personality, extra_prompt, is_player, is_dynamic, is_locked, visual_anchor, image_path, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, ?, ?, ?)`
+  ).run(
+    newId, worldId, existing.name, existing.nickname || '', existing.gender, existing.age,
+    existing.appearance, existing.personality, existing.extraPrompt,
+    existing.visualAnchor ? JSON.stringify(existing.visualAnchor) : null,
+    existing.imagePath || null, now
+  )
+  
+  return getCharacter(newId)
 }
 
 export function getPlayerCharacter(worldId: string): Character | null {
@@ -166,6 +180,7 @@ function rowToCharacter(row: Record<string, unknown>): Character {
     isDynamic: (row.is_dynamic as number) === 1,
     isLocked: (row.is_locked as number) === 1,
     visualAnchor: row.visual_anchor ? JSON.parse(row.visual_anchor as string) : null,
+    imagePath: (row.image_path as string) || undefined,
     createdAt: row.created_at as string,
   }
 }

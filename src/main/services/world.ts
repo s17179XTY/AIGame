@@ -45,7 +45,7 @@ export function getWorld(id: string): World | null {
 
 export function listWorlds(): World[] {
   const db = getDatabase()
-  const rows = db.prepare('SELECT * FROM worlds ORDER BY updated_at DESC').all() as Record<string, unknown>[]
+  const rows = db.prepare('SELECT * FROM worlds WHERE id != ? ORDER BY updated_at DESC').all('__global__') as Record<string, unknown>[]
   return rows.map(rowToWorld)
 }
 
@@ -68,6 +68,7 @@ export function updateWorld(id: string, updates: Partial<WorldConfig>): World | 
 }
 
 export function deleteWorld(id: string): boolean {
+  if (id === '__global__') return false
   const db = getDatabase()
   const result = db.prepare('DELETE FROM worlds WHERE id = ?').run(id)
   return result.changes > 0

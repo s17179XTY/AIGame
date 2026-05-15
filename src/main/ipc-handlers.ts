@@ -1,8 +1,9 @@
-import { ipcMain } from 'electron'
+import fs from 'fs';
+import { app, dialog, ipcMain } from 'electron';
 import { IPC_CHANNELS, WorldConfig, StoryEntry } from './services/types'
 import { createWorld, getWorld, listWorlds, updateWorld, deleteWorld, getWorldState } from './services/world'
 import { createCharacter, getCharacter, listCharacters, updateCharacter, deleteCharacter, uploadCharacterImage, listGlobalCharacters, assignCharacterToWorld } from './services/character'
-import { processGameAction, processGMCommand, getStoryLog, deleteStoryEntry, deleteStoryAfter, generateOpeningNarration } from './services/game'
+import { processGameAction, processGMCommand, getStoryLog, deleteStoryEntry, deleteStoryAfter, generateOpeningNarration, autoFillCharacter, autoFillWorld } from './services/game'
 import { getSettings, updateSettings, testLLMConnection, listConfigs, getConfig, createConfig, updateConfig, deleteConfig, setActiveConfig, getActiveConfig, pingConfig, listImageConfigs, getImageConfig, createImageConfig, updateImageConfig, deleteImageConfig, setActiveImageConfig, getActiveImageConfig, pingImageConfig, listVoiceConfigs, getVoiceConfig, createVoiceConfig, updateVoiceConfig, deleteVoiceConfig, setActiveVoiceConfig, getActiveVoiceConfig, pingVoiceConfig } from './services/settings'
 import { OpenAIImageProvider, StabilityImageProvider } from './services/image'
 import { createVoiceProvider } from './services/voice'
@@ -259,5 +260,35 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.STORY_GET_SNAPSHOT, (_event, worldId: string) => {
     return getWorldState(worldId)
+  })
+
+  // Util handlers (file save/open)
+  ipcMain.handle('util:save-file', async (_event, defaultName: string, content: string) => {
+    const result = await dialog.showSaveDialog({
+      defaultPath: defaultName,
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+    })
+    if (result.canceled || !result.filePath) return null
+    fs.writeFileSync(result.filePath, content, 'utf-8')
+    return result.filePath
+  })
+
+  ipcMain.handle('util:open-file', async (_event) => {
+    const result = await dialog.showOpenDialog({
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+      properties: ['openFile'],
+    })
+    if (result.canceled || result.filePaths.length === 0) return null
+    const content = fs.readFileSync(result.filePaths[0], 'utf-8')
+    return content
+  })
+
+  // Auto-fill handlers
+  ipcMain.handle(IPC_CHANNELS.CHARACTER_AUTO_FILL, async (_event, characterId: string) => {
+    return autoFillCharacter(characterId)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.WORLD_AUTO_FILL, async (_event, worldId: string) => {
+    return autoFillWorld(worldId)
   })
 }

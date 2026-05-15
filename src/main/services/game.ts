@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto'
 import { getDatabase } from '../database'
-import { updateWorld, getWorldState as getWorldStateFromWorld } from './world'
+import { updateWorld } from './world'
 import { updateCharacter as updateCharacterInDb } from './character'
 import {
   World,
@@ -140,12 +140,12 @@ function buildPrompt(
   const characterListText = characters
     .map(
       (c) =>
-        `- ${c.name} (ID: ${c.id}): ${c.gender}, ${c.age}�? ${c.personality}, 外觀: ${c.appearance}${c.isPlayer ? ' [玩家角色]' : ''}${c.extraPrompt ? ` 補充: ${c.extraPrompt}` : ''}`
+        `- ${c.name} (ID: ${c.id}): ${c.gender}, ${c.age}歲, ${c.personality}, 外觀: ${c.appearance}${c.isPlayer ? ' [玩家角色]' : ''}${c.extraPrompt ? ` 補充: ${c.extraPrompt}` : ''}`
     )
     .join('\n')
 
   const relationshipsText = worldState.relationships
-    .map((r) => `- ${r.characterA} �?${r.characterB}: ${r.relation} (${r.description})`)
+    .map((r) => `- ${r.characterA} 與 ${r.characterB}: ${r.relation} (${r.description})`)
     .join('\n')
 
   const recentEventsText = worldState.recentEvents.slice(-10).map((e) => `- ${e}`).join('\n')
@@ -154,14 +154,16 @@ function buildPrompt(
     .map(([name, emotion]) => `- ${name}: ${emotion}`)
     .join('\n')
 
-  const systemPrompt = `你是一個互動敘事遊戲的 AI 遊戲主持�?(Game Master)�?
+  const systemPrompt = `你是一個互動敘事遊戲的 AI 遊戲主持人 (Game Master)。
+
 ## 世界設定
 - 世界名稱: ${world.config.name}
 - 世界觀: ${world.config.worldview}
 - 世界規則: ${world.config.rules}
 ${world.config.systemPrompt ? `## 系統提示詞\n${world.config.systemPrompt}` : ''}
 
-## 當前狀�?- 場景: ${worldState.scene}
+## 當前狀態
+- 場景: ${worldState.scene}
 - 時間: ${worldState.time}
 - 天氣: ${worldState.weather}
 
@@ -178,37 +180,37 @@ ${relationshipsText || '尚無記錄'}
 ${recentEventsText || '尚無記錄'}
 
 ## 輸出格式要求
-你必須以嚴格�?JSON 格式輸出，結構如下：
+你必須以嚴格的 JSON 格式輸出，結構如下：
 
 \`\`\`json
 {
   "narration": "場景敘述、環境描寫、旁白（純文字）",
   "dialogues": [
     {
-      "speakerId": "角色ID（必須使用上方角色列表中�?ID，若為玩家則�?${player.id}�?,
+      "speakerId": "角色ID（必須使用上方角色列表中的 ID，若為玩家則用 ${player.id}）",
       "speakerName": "角色名稱",
       "type": "dialogue | monologue | action",
-      "content": "發言或動作內�?,
-      "emotion": "情緒描述（如：平靜、憤怒、悲傷、喜悅、緊張等�?
+      "content": "發言或動作內容",
+      "emotion": "情緒描述（如：平靜、憤怒、悲傷、喜悅、緊張等）"
     }
   ],
   "stateUpdate": {
     "sceneChanged": true/false,
-    "newScene": "新場景描述（�?sceneChanged �?true 時填寫）",
+    "newScene": "新場景描述（僅 sceneChanged 為 true 時填寫）",
     "timeAdvanced": "時間推進描述（如：過了兩小時、夜幕降臨）",
     "weatherChanged": true/false,
-    "newWeather": "新天氣（�?weatherChanged �?true 時填寫）",
-    "emotionUpdates": {"角色�?: "新情�?},
+    "newWeather": "新天氣（僅 weatherChanged 為 true 時填寫）",
+    "emotionUpdates": {"角色名": "新情緒"},
     "relationshipUpdates": [
-      {"characterA": "角色A�?, "characterB": "角色B�?, "newRelation": "新關�?, "description": "變化描述"}
+      {"characterA": "角色A名", "characterB": "角色B名", "newRelation": "新關係", "description": "變化描述"}
     ],
     "newEvents": ["事件描述1", "事件描述2"]
   },
   "imageTrigger": {
     "shouldGenerate": true/false,
     "level": "scene | behavior | none",
-    "sceneDescription": "畫面描述（英文，用於圖片生成�?50字以內）",
-    "charactersPresent": ["在場角色�?],
+    "sceneDescription": "畫面描述（英文，用於圖片生成，150字以內）",
+    "charactersPresent": ["在場角色名"],
     "keyAction": "關鍵動作描述"
   },
   "newCharacters": []
@@ -217,7 +219,7 @@ ${recentEventsText || '尚無記錄'}
 
 ## 重要規則
 1. 嚴格使用角色 ID 作為 speakerId
-2. ${isFreeAction ? '這是自由模式。玩家正在進行純動作/敘述，並非與任何人對話。你應該：\\n   - 以旁白身分敘述場景變化、環境、玩家的感受\\n   - 若玩家移動到新地點，更新 stateUpdate.newScene\\n   - **嚴禁**生成任何 NPC 的 dialogue，將 dialogues 設為空陣列 []\\n   - 不要讓任何角色對玩家說話' : '玩家輸入中，以括號（或（）標記的部分是動作（非對話），非括號部分才是對話或發言。即使玩家執行動作（如離開場景），NPC 角色仍應根據情境回應對話。你必須在 dialogues 陣列中輸出 NPC 的發言。'}
+2. ${isFreeAction ? '這是自由模式。玩家正在進行純動作/敘述，並非與任何人對話。你應該：\\n   - 以旁白身份敘述場景變化、環境、玩家的感受\\n   - 若玩家移動到新地點，更新 stateUpdate.newScene\\n   - **嚴禁**生成任何 NPC 的 dialogue，將 dialogues 設為空陣列 []\\n   - 不要讓任何角色對玩家說話' : '玩家輸入中，以括號（）標記的部份是動作（非對話），非括號部份才是對話或發言。即使玩家執行動作（如離開場景），NPC 角色仍應根據情境回應對話。你必須在 dialogues 陣列中輸出 NPC 的發言。'}
 3. 對話要生動、自然，反映角色性格與當前情緒
 4. 場景變化僅在故事確實轉移到新地點時觸發
 5. imageTrigger.shouldGenerate 僅在場景或重要行為發生顯著變化時設為 true
@@ -757,4 +759,96 @@ export function deleteStoryAfter(worldId: string, sequence: number): number {
     'DELETE FROM story_log WHERE world_id = ? AND sequence > ?'
   ).run(worldId, sequence)
   return result.changes
+}
+
+// ============================================================
+// AI Auto-Fill Functions
+// ============================================================
+
+export async function autoFillCharacter(characterId: string): Promise<Character | null> {
+  const config = getActiveConfig()
+  if (!config) return null
+
+  const character = getCharacter(characterId)
+  if (!character) return null
+
+  const emptyFields: string[] = []
+  if (!character.appearance?.trim()) emptyFields.push("appearance")
+  if (!character.personality?.trim()) emptyFields.push("personality")
+  if (!character.extraPrompt?.trim()) emptyFields.push("extraPrompt")
+  if (!character.nickname?.trim()) emptyFields.push("nickname")
+
+  if (emptyFields.length === 0) return character
+
+  const prompt = ["You are a character designer. Fill in the missing fields for this character:",
+    "Name: " + character.name,
+    "Gender: " + character.gender,
+    "Age: " + String(character.age),
+    "Missing fields: " + emptyFields.join(", "),
+    "",
+    "Respond with JSON only. Only include the missing fields."
+  ].join("\n")
+
+  const llmProvider = createLLMProvider(config)
+  let response: any
+  try {
+    response = await llmProvider.chat([{ role: "user", content: prompt }], {
+      model: config.model,
+      temperature: 0.8,
+      maxTokens: 1024,
+    })
+  } catch {
+    return character
+  }
+
+  try {
+    const jsonMatch = response.text.match(/\{[\s\S]*\}/)
+    const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : response.text)
+    return updateCharacterInDb(characterId, parsed)
+  } catch {
+    return character
+  }
+}
+
+export async function autoFillWorld(worldId: string): Promise<World | null> {
+  const config = getActiveConfig()
+  if (!config) return null
+
+  const world = getWorld(worldId)
+  if (!world) return null
+
+  const emptyFields: string[] = []
+  if (!world.config.worldview?.trim()) emptyFields.push("worldview")
+  if (!world.config.rules?.trim()) emptyFields.push("rules")
+  if (!world.config.systemPrompt?.trim()) emptyFields.push("systemPrompt")
+  if (!world.config.initialScene?.trim()) emptyFields.push("initialScene")
+
+  if (emptyFields.length === 0) return world
+
+  const prompt = ["You are a world designer. Fill in the missing world configuration fields:",
+    "World Name: " + world.config.name,
+    "Missing fields: " + emptyFields.join(", "),
+    "",
+    "Respond with JSON only. Only include the missing fields."
+  ].join("\n")
+
+  const llmProvider = createLLMProvider(config)
+  let response: any
+  try {
+    response = await llmProvider.chat([{ role: "user", content: prompt }], {
+      model: config.model,
+      temperature: 0.8,
+      maxTokens: 1024,
+    })
+  } catch {
+    return world
+  }
+
+  try {
+    const jsonMatch = response.text.match(/\{[\s\S]*\}/)
+    const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : response.text)
+    return updateWorld(worldId, parsed)
+  } catch {
+    return world
+  }
 }

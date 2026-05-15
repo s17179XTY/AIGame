@@ -8,6 +8,8 @@ const DEFAULT_SETTINGS: AppSettingsType = {
   imageFrequency: 'standard',
   autoPlayVoice: true,
   language: 'zh-TW',
+  imageEnabled: true,
+  voiceEnabled: true,
 }
 
 interface SettingsStore {
@@ -99,7 +101,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
 
   setActiveConfig: async (id) => {
     await window.api.config.setActive(id)
-    set({ activeConfigId: id })
+    set((s) => ({ settings: { ...s.settings, activeLlmConfigId: id }, activeConfigId: id }))
   },
 
   pingConfig: async (config) => {

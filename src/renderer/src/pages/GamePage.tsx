@@ -25,8 +25,8 @@ export default function GamePage() {
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
-  const hasImageConfig = (settings.activeImageConfigId ?? null) !== null
-  const hasVoiceConfig = (settings.activeVoiceConfigId ?? null) !== null
+  const hasImageConfig = (settings.activeImageConfigId ?? null) !== null && settings.imageEnabled !== false
+  const hasVoiceConfig = (settings.activeVoiceConfigId ?? null) !== null && settings.voiceEnabled !== false
 
   const [showWorldSettings, setShowWorldSettings] = useState(false)
   const [selectedCharCard, setSelectedCharCard] = useState<{ char: Character; emotion?: string } | null>(null)
