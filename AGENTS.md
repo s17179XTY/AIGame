@@ -810,3 +810,119 @@ git push
 - GamePage.tsx 多個 silent catch（無 Toast 提示）
 - WorldCreatePage 使用 alert() 而非 Toast
 - 魔術數字（面板寬度 200/500、toast 3s、autoFill temperature 0.8）
+
+---
+
+## v1.1.2 亂碼根源修復 (2026-05-16)
+
+### 問題
+
+提交 70cd9b9 ("encoding corruption 修復") 在將 `\uXXXX` Unicode 轉義序列轉換為實際中文字元時錯誤地插入了多餘位元組，導致 5 個前端檔案出現 UTF-8 解碼錯誤：
+- `SettingsPage.tsx` - 語言選擇器標籤損壞
+- `HomePage.tsx` - Toast 訊息損壞
+- `WorldCreatePage.tsx` - Alert 訊息損壞
+- `WorldSettingsModal.tsx` - 提示文字損壞
+- `CharacterFormModal.tsx` - 新建時即損壞
+
+### 修復
+
+1. 從 6c2359b (乾淨基線) 恢復 4 個現有檔案
+2. 從零重建 CharacterFormModal.tsx
+3. 重新套用功能變更 (ToggleSwitch、角色管理) 使用安全方法
+4. 所有前端 `.ts/.tsx` 檔案的中文字串使用 `\uXXXX` 轉義序列
+
+### 編碼安全規則 (CRITICAL)
+
+**永遠不要做的事：**
+- PowerShell `>` 重定向輸出含中文的檔案
+- `Set-Content` 不加 `-Encoding UTF8`
+- PowerShell herestring (`@''@/ @""@`) 輸出含中文的內容
+- 任何會在檔案中產生 `\xEF\xBF\xBD` (U+FFFD) 位元組的操作
+
+**必須做的事：**
+- 用 Python `pathlib.Path(path).write_text(content, 'utf-8')` 寫入任何含中文的檔案
+- 寫入後驗證：`assert pathlib.Path(f).read_bytes().count(b'\xef\xbf\xbd') == 0`
+- 使用 `git show <commit>:<path>` 恢復已知乾淨版本
+- 前端 TSX 檔案中的中文字串優先使用 `\uXXXX` 轉義序列
+
+### 已修復檔案清單
+
+| 檔案 | 狀態 |
+|------|------|
+| `src/renderer/src/pages/SettingsPage.tsx` | 還原 + ToggleSwitch 元件 |
+| `src/renderer/src/pages/HomePage.tsx` | 還原至 6c2359b 乾淨版 |
+| `src/renderer/src/pages/WorldCreatePage.tsx` | 還原至 6c2359b 乾淨版 |
+| `src/renderer/src/components/WorldSettingsModal.tsx` | 還原 + useI18n/useToast 修復 + CharacterFormModal 匯入 |
+| `src/renderer/src/components/CharacterFormModal.tsx` | 從零重建 (統一角色表單) |
+| `src/renderer/src/i18n/en.ts` | 新增 exportFailed key |
+| `src/renderer/src/i18n/zh-TW.ts` | 新增 exportFailed key |
+| `src/renderer/src/i18n/ja.ts` | 新增 exportFailed key |
+
+---
+
+## v1.2.0 全方位重構 + 場景感知 + 表單統一 (2026-05-16)
+
+### 變更範圍
+
+10 個檔案，淨刪除 776 行程式碼。核心目標：消除編碼亂碼根源、統一角色表單、修正對話模式場景感知。
+
+### 🔴 編碼安全規則（絕對優先）
+
+**這是最重要的章節。過去兩次「修復」都因違反此規則而引入新亂碼。**
+
+絕對禁止：
+- PowerShell  + ">" + @" 重定向寫入含中文的檔案
+- Set-Content 不加 -Encoding UTF8
+- PowerShell herestring 寫入含中文的內容
+- 任何會產生 EF BF BD (U+FFFD) 位元組的操作
+
+必須遵守：
+- 所有前端 .ts/.tsx 檔案的中文字串使用 \ + "uXXXX" +  轉義序列儲存
+- 後端 src/main/ 檔案可使用實際 UTF-8 中文字元
+- i18n 檔案使用實際 UTF-8（已驗證穩定）
+- 用 Python pathlib.Path(path).write_text(content, 'utf-8') 寫入任何檔案
+- 寫入後掃描驗證零 U+FFFD
+
+### 🎯 場景感知對話規則（game.ts）
+
+buildPrompt 根據 parsedInput.speechPart 動態生成規則：
+- 有對話內容 → NPC 根據對話回應，但只有當前場景中的角色能說話
+- 純動作 → AI 判斷場景是否轉移
+  - 移動到新場景 → sceneChanged: true → 僅新場景角色可加入 dialogues
+  - 原地動作 → 當前場景角色可回應
+- 自由模式（isFreeAction）→ dialogues 強制為空陣列
+
+新增 prompt 區塊：場景角色資訊（當前場景中的角色才能互動）
+
+### 🏗️ 統一角色表單架構
+
+整個專案只有一個角色表單 → CharacterFormModal.tsx
+
+使用位置：HomePage（模板CRUD）、WorldCreatePage（新增NPC）、WorldSettingsModal（世界角色）
+
+欄位：name/gender/age 必填，nickname/appearance/personality/extraPrompt/imagePath 可選
+personality 和 extraPrompt 為可調大小的 textarea
+頂部 AI 提示、底部匯出/匯入按鈕
+
+### 🃏 角色模板 vs 世界角色
+
+角色模板（world_id = '__global__'）：HomePage 管理，character:list-global 查詢
+世界角色：從模板複製（非引用），修改不影響模板
+
+### 🌐 i18n 命名規範
+
+三語：zh-TW / en / ja
+命名空間：app/home/settings/worldCreate/worldSettingsModal/characterForm/game/storyLog/gmPanel/common
+所有 UI 文字必須透過 t() 取得，嚴禁硬編碼
+新增 key 必須同時更新三個語言檔案
+
+### 🗂️ 專案架構（2026-05-16）
+
+src/main/services/ - game.ts(854)/character.ts(186)/world.ts/settings.ts/types.ts(425) + llm/image/voice
+src/renderer/src/ - 6 pages + 5 components + 3 stores(Zustand) + i18n
+
+### ⚠️ 已知問題
+
+🔴 processGameAction 競爭條件、MAX(sequence) 非原子、零測試
+🟡 API Key 明文、Prompt Injection、game.ts 上帝模組、IPC any 型別、__global__ 魔術字串
+🟢 WorldCreatePage 主角表單仍內聯、角色卡片無頭像預覽、GM 自動填充未連接

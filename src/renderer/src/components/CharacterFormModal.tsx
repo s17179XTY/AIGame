@@ -1,217 +1,50 @@
 import React, { useState, useEffect } from 'react'
 import { useI18n } from '../i18n'
-import { useToast } from './ToastProvider'
-import type { CharacterConfig, Character } from '../../../main/services/types'
+import { useToast } from '../components/ToastProvider'
+import type { Character, CharacterConfig } from '../../../main/services/types'
 
-interface Props {
+export interface CharacterFormData extends CharacterConfig {}
+
+interface CharacterFormModalProps {
   mode: 'create' | 'edit'
-  character?: Character
-  worldId?: string
-  onSave: (config: CharacterConfig & { imagePath?: string }) => Promise<void>
+  character?: Character | null
+  onSave: (data: CharacterFormData) => void
   onClose: () => void
+  worldId?: string
 }
 
-export default function CharacterFormModal({ mode, character, worldId, onSave, onClose }: Props) {
+export default function CharacterFormModal({ mode, character, onSave, onClose, worldId }: CharacterFormModalProps) {
   const { t } = useI18n()
   const toast = useToast()
-  const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState<CharacterConfig & { imagePath?: string }>({
-    name: '',
-    nickname: '',
-    gender: '',
-    age: 0,
-    appearance: '',
-    personality: '',
-    extraPrompt: '',
-    imagePath: undefined,
-  })
-
-  useEffect(() => {
-    if (mode === 'edit' && character) {
-      setForm({
-        name: character.name,
-        nickname: character.nickname || '',
-        gender: character.gender,
-        age: character.age,
-        appearance: character.appearance,
-        personality: character.personality,
-        extraPrompt: character.extraPrompt,
-        imagePath: character.imagePath,
-      })
-    }
-  }, [mode, character])
-
-  const handleSubmit = async () => {
-    if (!form.name.trim() || !form.gender.trim() || !form.age) {
-      toast.show(t('characterForm.fillRequired'))
-      return
-    }
-    setSaving(true)
-    try {
-      await onSave(form)
-      onClose()
-    } catch (err: any) {
-      toast.show((err.message ?? t('common.unknownError')))
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleImageUpload = () => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = 'image/*'
-    input.onchange = (e: any) => {
-      const file = e.target.files?.[0]
-      if (file) {
-        setForm((f) => ({ ...f, imagePath: file.path }))
-      }
-    }
-    input.click()
-  }
-
-  const handleExport = async () => {
-    const jsonStr = JSON.stringify(form, null, 2)
-    await window.api.util.saveFile('character.json', jsonStr)
-  }
-
-  const handleImport = async () => {
-    const content = await window.api.util.openFile()
-    if (!content) return
-    try {
-      const parsed = JSON.parse(content)
-      setForm({
-        name: parsed.name || '',
-        nickname: parsed.nickname || '',
-        gender: parsed.gender || '',
-        age: parsed.age || 0,
-        appearance: parsed.appearance || '',
-        personality: parsed.personality || '',
-        extraPrompt: parsed.extraPrompt || '',
-        imagePath: parsed.imagePath || undefined,
-      })
-      toast.show(t('characterForm.importSuccess'))
-    } catch {
-      toast.show(t('characterForm.importFailed'))
-    }
-  }
-
-  const inputClass = 'w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none text-sm'
-  const textareaClass = 'w-full bg-game-bg border border-game-accent/30 rounded-lg px-3 py-2 text-game-text focus:border-game-highlight outline-none text-sm resize-y'
-
+  const [form, setForm] = useState<CharacterFormData>({ name: '', nickname: '', gender: '', age: 0, appearance: '', personality: '', extraPrompt: '', imagePath: '' })
+  useEffect(() => { if (mode === 'edit' && character) { setForm({ name: character.name || '', nickname: character.nickname || '', gender: character.gender || '', age: character.age || 0, appearance: character.appearance || '', personality: character.personality || '', extraPrompt: character.extraPrompt || '', imagePath: character.imagePath || '' }) } }, [mode, character])
+  const update = <K extends keyof CharacterFormData>(key: K, value: CharacterFormData[K]) => { setForm(f => ({ ...f, [key]: value })) }
+  const handleSubmit = () => { if (!form.name.trim() || !form.gender.trim() || !form.age || form.age <= 0) { toast.show(t('characterForm.fillRequired')); return } onSave(form) }
+  const handleExport = async () => { try { const json = JSON.stringify(form, null, 2); await window.api.util.saveFile('character-' + (form.name || 'export') + '.json', json) } catch (err: any) { toast.show(t('characterForm.exportFailed') + ': ' + (err.message || '')) } }
+  const handleImport = async () => { try { const result = await window.api.util.openFile(); if (result) { const data = JSON.parse(result) as CharacterFormData; setForm({ name: data.name || '', nickname: data.nickname || '', gender: data.gender || '', age: data.age || 0, appearance: data.appearance || '', personality: data.personality || '', extraPrompt: data.extraPrompt || '', imagePath: data.imagePath || '' }); toast.show(t('characterForm.importSuccess')) } } catch (err: any) { toast.show(t('characterForm.importFailed') + ': ' + (err.message || '')) } }
+  const ic = 'w-full px-4 py-2.5 rounded-xl bg-game-panel border border-white/[0.10] text-game-text placeholder-game-muted/50 focus:outline-none focus:border-indigo-500/40 focus:ring-1 focus:ring-indigo-500/20 transition-all'; const tc = ic + ' resize-y min-h-[80px]'; const lc = 'block text-sm font-medium text-game-muted mb-1.5'
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm'>
-      <div className='bg-game-panel rounded-2xl border border-game-accent/30 w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl'>
-        {/* Header */}
-        <div className='flex items-center justify-between px-6 py-4 border-b border-game-accent/20'>
-          <h3 className='text-lg font-semibold text-game-highlight'>
-            {mode === 'edit' ? t('characterForm.editTitle') : t('characterForm.createTitle')}
-          </h3>
-          <button onClick={onClose} className='text-game-muted hover:text-game-text text-xl'>&times;</button>
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 pb-12 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
+      <div className="bg-game-panel rounded-2xl border border-game-accent/30 w-full max-w-lg p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+        <h3 className="text-lg font-semibold text-game-highlight mb-5">{mode === 'create' ? t('characterForm.createTitle') : t('characterForm.editTitle')}</h3>
+        <div className="space-y-4">
+          <p className="text-xs text-game-muted/60 italic bg-game-accent/5 rounded-lg px-3 py-2 border border-game-accent/10">{t('characterForm.aiHint')}</p>
+          <div><label className={lc}>{t('characterForm.name')} <span className="text-red-400">*</span></label><input value={form.name} onChange={e => update('name', e.target.value)} className={ic} placeholder="e.g. Alice" /></div>
+          <div><label className={lc}>{t('characterForm.nickname')}</label><input value={form.nickname} onChange={e => update('nickname', e.target.value)} className={ic} placeholder="e.g. Al" /></div>
+          <div><label className={lc}>{t('characterForm.gender')} <span className="text-red-400">*</span></label><input value={form.gender} onChange={e => update('gender', e.target.value)} className={ic} placeholder="e.g. Female" /></div>
+          <div><label className={lc}>{t('characterForm.age')} <span className="text-red-400">*</span></label><input type="number" value={form.age || ''} onChange={e => update('age', parseInt(e.target.value) || 0)} className={ic} placeholder="e.g. 17" min="0" /></div>
+          <div><label className={lc}>{t('characterForm.appearance')}</label><textarea value={form.appearance} onChange={e => update('appearance', e.target.value)} className={tc} placeholder="e.g. Long black hair..." /></div>
+          <div><label className={lc}>{t('characterForm.personality')}</label><textarea value={form.personality} onChange={e => update('personality', e.target.value)} className={tc} placeholder="e.g. Gentle and kind..." /></div>
+          <div><label className={lc}>{t('characterForm.extraPrompt')}</label><textarea value={form.extraPrompt} onChange={e => update('extraPrompt', e.target.value)} className={tc} placeholder="e.g. Extra AI hints..." /></div>
+          <div><label className={lc}>{t('characterForm.imagePath')}</label><input value={form.imagePath} onChange={e => update('imagePath', e.target.value)} className={ic} placeholder="/path/to/image.png" /></div>
         </div>
-
-        {/* Body */}
-        <div className='flex-1 overflow-y-auto p-6 space-y-4'>
-          {/* AI Hint */}
-          <div className='text-xs text-game-muted/70 bg-game-bg/50 rounded-lg px-3 py-2 border border-game-accent/10'>
-            {t('characterForm.aiHint')}
-          </div>
-
-          {/* Name */}
-          <div>
-            <label className='block text-xs text-game-muted mb-1'>{t('characterForm.name')} *</label>
-            <input type='text' value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              className={inputClass} />
-          </div>
-
-          {/* Nickname */}
-          <div>
-            <label className='block text-xs text-game-muted mb-1'>{t('characterForm.nickname')}</label>
-            <input type='text' value={form.nickname || ''}
-              onChange={(e) => setForm((f) => ({ ...f, nickname: e.target.value }))}
-              className={inputClass} />
-          </div>
-
-          {/* Gender + Age */}
-          <div className='grid grid-cols-2 gap-4'>
-            <div>
-              <label className='block text-xs text-game-muted mb-1'>{t('characterForm.gender')} *</label>
-              <input type='text' value={form.gender}
-                onChange={(e) => setForm((f) => ({ ...f, gender: e.target.value }))}
-                placeholder='ÄÐ / Å® / ÆäËû'
-                className={inputClass} />
-            </div>
-            <div>
-              <label className='block text-xs text-game-muted mb-1'>{t('characterForm.age')} *</label>
-              <input type='number' value={form.age || ''}
-                onChange={(e) => setForm((f) => ({ ...f, age: parseInt(e.target.value) || 0 }))}
-                className={inputClass} />
-            </div>
-          </div>
-
-          {/* Appearance */}
-          <div>
-            <label className='block text-xs text-game-muted mb-1'>{t('characterForm.appearance')}</label>
-            <textarea value={form.appearance}
-              onChange={(e) => setForm((f) => ({ ...f, appearance: e.target.value }))}
-              rows={3} className={textareaClass} />
-          </div>
-
-          {/* Personality */}
-          <div>
-            <label className='block text-xs text-game-muted mb-1'>{t('characterForm.personality')}</label>
-            <textarea value={form.personality}
-              onChange={(e) => setForm((f) => ({ ...f, personality: e.target.value }))}
-              rows={3} className={textareaClass} />
-          </div>
-
-          {/* Extra Prompt */}
-          <div>
-            <label className='block text-xs text-game-muted mb-1'>{t('characterForm.extraPrompt')}</label>
-            <textarea value={form.extraPrompt}
-              onChange={(e) => setForm((f) => ({ ...f, extraPrompt: e.target.value }))}
-              rows={3} className={textareaClass} />
-          </div>
-
-          {/* Image */}
-          <div>
-            <label className='block text-xs text-game-muted mb-1'>{t('characterForm.image')}</label>
-            <div className='flex items-center gap-3'>
-              <button onClick={handleImageUpload}
-                className='px-3 py-1.5 text-xs border border-game-highlight/30 rounded-lg text-game-highlight hover:bg-game-highlight/10'>
-                {form.imagePath ? t('characterForm.changeImage') : t('characterForm.uploadImage')}
-              </button>
-              {form.imagePath && (
-                <img src={`file://${form.imagePath}`} alt='preview'
-                  className='w-12 h-12 rounded-lg object-cover border border-white/10' />
-              )}
-            </div>
-          </div>
-
-          {/* Export / Import */}
-          <div className='flex gap-2'>
-            <button onClick={handleExport}
-              className='flex-1 py-2 text-xs border border-game-accent/20 rounded-lg text-game-muted hover:border-game-highlight/30 hover:text-game-text transition-colors'>
-              {t('characterForm.export')}
-            </button>
-            <button onClick={handleImport}
-              className='flex-1 py-2 text-xs border border-game-accent/20 rounded-lg text-game-muted hover:border-game-highlight/30 hover:text-game-text transition-colors'>
-              {t('characterForm.import')}
-            </button>
-          </div>
+        <div className="flex gap-3 mt-6">
+          <button onClick={handleSubmit} className="flex-1 py-2.5 bg-game-highlight rounded-lg font-medium text-white hover:bg-game-highlight/80 transition-colors">{mode === 'create' ? t('characterForm.createTitle') : t('common.save')}</button>
+          <button onClick={onClose} className="px-5 py-2.5 border border-game-muted/30 rounded-lg text-game-muted hover:border-game-highlight hover:text-game-text transition-colors">{t('common.cancel')}</button>
         </div>
-
-        {/* Footer */}
-        <div className='flex gap-3 px-6 py-4 border-t border-game-accent/20'>
-          <button onClick={onClose}
-            className='flex-1 py-2 text-sm border border-game-accent/20 rounded-xl text-game-muted hover:text-game-text transition-colors'>
-            {t('common.cancel')}
-          </button>
-          <button onClick={handleSubmit} disabled={saving}
-            className='flex-1 py-2 text-sm bg-game-highlight rounded-xl font-medium hover:bg-game-highlight/80 disabled:opacity-50 transition-colors'>
-            {saving ? t('common.loading') : t('common.save')}
-          </button>
+        <div className="flex gap-3 mt-4 pt-4 border-t border-white/[0.07]">
+          <button onClick={handleExport} className="flex-1 py-1.5 text-xs border border-game-accent/20 rounded-lg text-game-muted hover:border-game-highlight/40 hover:text-game-text transition-colors">{t('characterForm.export')}</button>
+          <button onClick={handleImport} className="flex-1 py-1.5 text-xs border border-game-accent/20 rounded-lg text-game-muted hover:border-game-highlight/40 hover:text-game-text transition-colors">{t('characterForm.import')}</button>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+﻿import React, { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { useSettingsStore } from '../stores/settingsStore'
 import { useI18n } from '../i18n'
@@ -90,6 +90,8 @@ export default function SettingsPage() {
   const update = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     setForm((f) => ({ ...f, [key]: value }))
   }
+
+
   function ToggleSwitch({ enabled, onChange, label, description }: { enabled: boolean; onChange: (v: boolean) => void; label: string; description?: string }) {
     return (
       <section className="bg-game-panel rounded-xl p-6 border border-game-accent/20">
@@ -99,8 +101,8 @@ export default function SettingsPage() {
             {description && <p className="text-sm text-game-muted mt-1">{description}</p>}
           </div>
           <button onClick={() => onChange(!enabled)}
-            className={"relative w-11 h-6 rounded-full transition-colors " + (enabled ? "bg-game-highlight" : "bg-game-accent/30")}>
-            <div className={"absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform " + (enabled ? "translate-x-5" : "translate-x-0.5")} />
+            className={`relative w-11 h-6 rounded-full transition-colors ${enabled ? "bg-game-highlight" : "bg-game-accent/30"}`}>
+            <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${enabled ? "translate-x-5" : "translate-x-0.5"}`} />
           </button>
         </div>
       </section>
@@ -276,7 +278,7 @@ export default function SettingsPage() {
           {/* Voice Toggle */}
           <ToggleSwitch enabled={form.voiceEnabled} onChange={(v) => update('voiceEnabled', v)} label={t('settings.voiceEnabled')} description={t('settings.voiceEnabledDesc')} />
 
-          {/* Voice Auto-Play */}
+          {/* Voice Auto-Play Toggle */}
           <ToggleSwitch enabled={form.autoPlayVoice} onChange={(v) => update('autoPlayVoice', v)} label={t('settings.autoPlayVoice')} description={t('settings.autoPlayVoiceDesc')} />
 
           {/* Language */}
@@ -285,9 +287,9 @@ export default function SettingsPage() {
             <select value={form.language}
               onChange={(e) => update('language', e.target.value as 'zh-TW' | 'en' | 'ja')}
               className={inputClass}>
-              <option value="zh-TW">�繁體中文</option>
+              <option value="zh-TW">\u7E41\u9AD4\u4E2D\u6587</option>
               <option value="en">English</option>
-              <option value="ja">�日本語</option>
+              <option value="ja">\u65E5\u672C\u8A9E</option>
             </select>
           </section>
 
