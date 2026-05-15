@@ -27,24 +27,33 @@ export class AnthropicProvider implements LLMProvider {
     const systemMessages = messages.filter((m) => m.role === 'system')
     const conversationMessages = messages.filter((m) => m.role !== 'system')
 
-    const systemPrompt = systemMessages.map((m) => m.content).join('\n\n')
+    const systemPrompt = systemMessages.map((m) => m.content).join(`
 
-    const response = await client.messages.create({
-      model: options.model,
-      max_tokens: options.maxTokens ?? 4096,
-      temperature: options.temperature ?? 0.8,
-      top_p: options.topP,
-      system: systemPrompt || undefined,
-      messages: conversationMessages.map((m) => ({
-        role: m.role as 'user' | 'assistant',
-        content: m.content,
-      })),
-    })
+`)
+
+    let response
+    try {
+      response = await client.messages.create({
+        model: options.model,
+        max_tokens: options.maxTokens ?? 4096,
+        temperature: options.temperature ?? 0.8,
+        top_p: options.topP,
+        system: systemPrompt || undefined,
+        messages: conversationMessages.map((m) => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+        })),
+      })
+    } catch (err: any) {
+      const msg = err?.message ?? err?.toString() ?? 'Unknown error'
+      throw new Error('LLM request failed: ' + msg)
+    }
 
     const textContent = response.content
       .filter((block) => block.type === 'text')
       .map((block) => (block.type === 'text' ? block.text : ''))
-      .join('\n')
+      .join(`
+`)
 
     return {
       text: textContent,

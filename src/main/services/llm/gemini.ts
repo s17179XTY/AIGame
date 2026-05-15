@@ -49,7 +49,13 @@ export class GeminiProvider implements LLMProvider {
       },
     })
 
-    const result = await chat.sendMessage(lastMessage?.content ?? '')
+    let result
+    try {
+      result = await chat.sendMessage(lastMessage?.content ?? '')
+    } catch (err: any) {
+      const msg = err?.message ?? err?.toString() ?? 'Unknown error'
+      throw new Error('LLM request failed: ' + msg)
+    }
     const text = result.response.text()
 
     return {

@@ -10,6 +10,7 @@ export interface WorldConfig {
   rules: string
   systemPrompt: string
   initialScene: string
+  simulationSpeed?: 'slow' | 'medium' | 'fast'
 }
 
 export interface World {
@@ -52,22 +53,26 @@ export interface ImageContext {
 
 export interface CharacterConfig {
   name: string
+  nickname?: string
   gender: string
   age: number
   appearance: string
   personality: string
   extraPrompt: string
+  imagePath?: string
 }
 
 export interface Character {
   id: string
   worldId: string
   name: string
+  nickname?: string
   gender: string
   age: number
   appearance: string
   personality: string
   extraPrompt: string
+  imagePath?: string
   isPlayer: boolean
   isDynamic: boolean
   isLocked: boolean
@@ -214,6 +219,32 @@ export interface LLMConfig {
   updatedAt: string
 }
 
+
+// --- Image Config Types ---
+
+export interface ImageConfig {
+  id: string
+  name: string
+  provider: ImageProviderType
+  model: string
+  apiKey: string
+  apiBaseUrl: string
+  size: string
+  quality: string
+  createdAt: string
+  updatedAt: string
+}
+
+export const DEFAULT_IMAGE_CONFIG: Omit<ImageConfig, 'id' | 'createdAt' | 'updatedAt'> = {
+  name: 'Default',
+  provider: 'openai',
+  model: 'dall-e-3',
+  apiKey: '',
+  apiBaseUrl: '',
+  size: '1024x1024',
+  quality: 'standard',
+}
+
 export const DEFAULT_LLM_CONFIG: Omit<LLMConfig, 'id' | 'createdAt' | 'updatedAt'> = {
   name: 'Default',
   provider: 'openai',
@@ -227,24 +258,66 @@ export const DEFAULT_LLM_CONFIG: Omit<LLMConfig, 'id' | 'createdAt' | 'updatedAt
   presencePenalty: 0,
 }
 
+
+// --- Voice Types ---
+
+export type VoiceProviderType = 'openai'
+
+export interface VoiceConfig {
+  id: string
+  name: string
+  provider: VoiceProviderType
+  model: string
+  apiKey: string
+  voice: string
+  speed: number
+  createdAt: string
+  updatedAt: string
+}
+
+export const DEFAULT_VOICE_CONFIG: Omit<VoiceConfig, 'id' | 'createdAt' | 'updatedAt'> = {
+  name: 'Default',
+  provider: 'openai',
+  model: 'tts-1',
+  apiKey: '',
+  voice: 'alloy',
+  speed: 1.0,
+}
+
+export interface TTSOptions {
+  text: string
+  voice?: string
+  speed?: number
+  model?: string
+}
+
+export interface TTSResult {
+  audioPath: string
+  format: string
+}
+
 // --- Settings Types ---
 
 export interface AppSettings {
   activeLlmConfigId: string | null
-  apiKey: string
-  imageProvider: ImageProviderType | 'none'
-  imageModel: string
-  stabilityApiKey: string
+  activeImageConfigId: string | null
+  activeVoiceConfigId: string | null
   imageFrequency: 'conservative' | 'standard' | 'rich'
+  autoPlayVoice: boolean
+  imageEnabled: boolean
+  voiceEnabled: boolean
+  language: 'zh-TW' | 'en' | 'ja'
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
   activeLlmConfigId: null,
-  apiKey: '',
-  imageProvider: 'none',
-  imageModel: 'dall-e-3',
-  stabilityApiKey: '',
+  activeImageConfigId: null,
+  activeVoiceConfigId: null,
   imageFrequency: 'standard',
+  autoPlayVoice: true,
+  imageEnabled: true,
+  voiceEnabled: true,
+  language: 'zh-TW',
 }
 
 // --- Game Types ---
@@ -252,7 +325,18 @@ export const DEFAULT_SETTINGS: AppSettings = {
 export interface GameAction {
   worldId: string
   playerInput: string
+  actionType?: 'dialogue' | 'gm-command' | 'free-action'
   requestImageGeneration?: boolean
+}
+
+export interface GMCommandResponse {
+  success: boolean
+  message: string
+  worldConfigPatch?: Partial<WorldConfig>
+  characterPatches?: Array<{ id: string; updates: Partial<CharacterConfig> }>
+  newScene?: string
+  newTime?: string
+  newWeather?: string
 }
 
 export interface GameResponse {
@@ -282,10 +366,17 @@ export const IPC_CHANNELS = {
   CHARACTER_UPDATE: 'character:update',
   CHARACTER_DELETE: 'character:delete',
   CHARACTER_GENERATE_AVATAR: 'character:generate-avatar',
+  CHARACTER_UPLOAD_IMAGE: 'character:upload-image',
+  CHARACTER_LIST_GLOBAL: 'character:list-global',
+  CHARACTER_ASSIGN_WORLD: 'character:assign-world',
+  CHARACTER_AUTO_FILL: 'character:auto-fill',
 
   // Game
   GAME_ACTION: 'game:action',
   GAME_NEW_CHARACTER_CONFIRM: 'game:new-character-confirm',
+  GAME_GM_ACTION: 'game:gm-action',
+  GAME_START: 'game:start',
+  WORLD_AUTO_FILL: 'world:auto-fill',
 
   // Image
   IMAGE_GENERATE_SCENE: 'image:generate-scene',
@@ -305,7 +396,30 @@ export const IPC_CHANNELS = {
   CONFIG_SET_ACTIVE: 'config:set-active',
   CONFIG_PING: 'config:ping',
 
+  // Image Configs
+  CONFIG_IMAGE_LIST: 'config:image:list',
+  CONFIG_IMAGE_GET: 'config:image:get',
+  CONFIG_IMAGE_CREATE: 'config:image:create',
+  CONFIG_IMAGE_UPDATE: 'config:image:update',
+  CONFIG_IMAGE_DELETE: 'config:image:delete',
+  CONFIG_IMAGE_SET_ACTIVE: 'config:image:set-active',
+  CONFIG_IMAGE_PING: 'config:image:ping',
+
+  // Voice Configs
+  CONFIG_VOICE_LIST: 'config:voice:list',
+  CONFIG_VOICE_GET: 'config:voice:get',
+  CONFIG_VOICE_CREATE: 'config:voice:create',
+  CONFIG_VOICE_UPDATE: 'config:voice:update',
+  CONFIG_VOICE_DELETE: 'config:voice:delete',
+  CONFIG_VOICE_SET_ACTIVE: 'config:voice:set-active',
+  CONFIG_VOICE_PING: 'config:voice:ping',
+
+  // Voice TTS
+  VOICE_TTS: 'voice:tts',
+
   // Story
   STORY_GET_LOG: 'story:get-log',
   STORY_GET_SNAPSHOT: 'story:get-snapshot',
+  STORY_DELETE_ENTRY: 'story:delete-entry',
+  STORY_DELETE_AFTER: 'story:delete-after',
 } as const
